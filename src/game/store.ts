@@ -1,8 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
-  ACTION_TIME,
-  DAY_MINUTES,
   DEVICE_SPEC,
   FERT_SPEC,
   LED_SPEC,
@@ -17,6 +15,7 @@ import {
 } from "./constants";
 import { salePrice } from "./economy";
 import { nextMarket } from "./economy";
+import { dateLabel } from "./environment";
 import { geneticsQuality, makePlant, uid } from "./genetics";
 import { tickDay } from "./simulation";
 import type {
@@ -27,10 +26,21 @@ import type {
   LedPower,
   Plant,
   PotSize,
+  Settings,
   Shelf,
   ShelfKind,
   SoilType,
 } from "./types";
+
+/** 現実のローカル日付 (YYYY-MM-DD) */
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+}
 
 export type View = "room" | "shelf" | "shop" | "collection";
 
@@ -44,7 +54,9 @@ interface GameStore {
   // ===== 永続化される状態 =====
   day: number;
   money: number;
-  timeLeft: number;
+  /** 最後にリアル日付同期した日 (YYYY-MM-DD) */
+  lastRealDate: string;
+  settings: Settings;
   plants: Record<string, Plant>;
   /** 棚に置かれていない株 (作業台) */
   bench: string[];
@@ -68,6 +80,7 @@ interface GameStore {
   placingShelf: ShelfKind | null;
   showReport: boolean;
   showHelp: boolean;
+  showSettings: boolean;
   toast: string | null;
 
   // ===== UI 操作 =====
@@ -79,10 +92,16 @@ interface GameStore {
   setPlacingShelf: (k: ShelfKind | null) => void;
   closeReport: () => void;
   setShowHelp: (b: boolean) => void;
+  setShowSettings: (b: boolean) => void;
   setToast: (s: string | null) => void;
 
   // ===== ゲームアクション =====
+  /** n 日進める (シミュレーション実行) */
+  advanceDays: (n: number) => void;
   nextDay: () => void;
+  /** 現実の日付が進んでいたら、その分ゲーム内の日も進める */
+  syncRealDay: () => void;
+  setGrowthSpeed: (v: number) => void;
   waterPlant: (id: string) => void;
   feedLiquid: (id: string) => void;
   repot: (id: string, pot: PotSize, soil: SoilType, baseFert: boolean) => void;
@@ -142,7 +161,8 @@ function initialGame() {
   return {
     day: 1,
     money: START_MONEY,
-    timeLeft: DAY_MINUTES,
+    lastRealDate: todayStr(),
+    settings: { growthSpeed: 1 } as Settings,
     plants: {} as Record<string, Plant>,
     bench: [] as string[],
     shelves: initialShelves(),
@@ -161,17 +181,6 @@ function initialGame() {
 export const useGame = create<GameStore>()(
   persist(
     (set, get) => {
-      /** 行動時間を消費。足りなければ false */
-      const spend = (min: number, label: string): boolean => {
-        const s = get();
-        if (s.timeLeft < min) {
-          set({ toast: `⏰ 今日はもう時間が足りない (${label}: ${min}分必要)。次の日へ進もう` });
-          return false;
-        }
-        set({ timeLeft: s.timeLeft - min });
-        return true;
-      };
-
       /** お金を消費。足りなければ false */
       const pay = (yen: number, label: string): boolean => {
         const s = get();
@@ -234,6 +243,7 @@ export const useGame = create<GameStore>()(
         placingShelf: null,
         showReport: false,
         showHelp: true,
+        showSettings: false,
         toast: null,
 
         setView: (v) => set({ view: v, movingPlantId: null, placingShelf: null }),
@@ -244,14 +254,30 @@ export const useGame = create<GameStore>()(
         setPlacingShelf: (k) => set({ placingShelf: k }),
         closeReport: () => set({ showReport: false }),
         setShowHelp: (b) => set({ showHelp: b, helpSeen: true }),
+        setShowSettings: (b) => set({ showSettings: b }),
         setToast: (s) => set({ toast: s }),
 
-        nextDay: () => {
+        advanceDays: (n) => {
           const s = get();
           const plants = JSON.parse(JSON.stringify(s.plants)) as Record<string, Plant>;
-          const { lines, electricity } = tickDay(s.day, plants, s.shelves, s.devices);
-          const { value: market, news } = nextMarket(s.market);
-          if (news) lines.push(news);
+          const lines: string[] = [];
+          let electricity = 0;
+          let market = s.market;
+          for (let i = 0; i < n; i++) {
+            const day = s.day + i;
+            const r = tickDay(day, plants, s.shelves, s.devices, s.settings.growthSpeed);
+            electricity += r.electricity;
+            const nm = nextMarket(market);
+            market = nm.value;
+            if (nm.news) r.lines.push(nm.news);
+            if (n > 1 && r.lines.length > 0) lines.push(`📅 ${dateLabel(day)}`);
+            lines.push(...r.lines);
+          }
+          if (lines.length > 60) {
+            const omitted = lines.length - 60;
+            lines.length = 60;
+            lines.push(`…ほか ${omitted} 件`);
+          }
 
           // 育成株到達を図鑑に記録
           const collection = { ...s.collection };
@@ -267,25 +293,47 @@ export const useGame = create<GameStore>()(
             }
           }
 
-          const report: DayReport = { day: s.day, lines, electricity, income: 0 };
+          const report: DayReport = { day: s.day, days: n, lines, electricity, income: 0 };
           set({
-            day: s.day + 1,
+            day: s.day + n,
             money: s.money - electricity,
-            timeLeft: DAY_MINUTES,
             plants,
             market,
             report,
             collection,
             showReport: true,
-            totalDaysPlayed: s.totalDaysPlayed + 1,
+            totalDaysPlayed: s.totalDaysPlayed + n,
             movingPlantId: null,
           });
+        },
+
+        nextDay: () => get().advanceDays(1),
+
+        syncRealDay: () => {
+          const s = get();
+          const today = todayStr();
+          if (!s.lastRealDate) {
+            set({ lastRealDate: today });
+            return;
+          }
+          const diff = daysBetween(s.lastRealDate, today);
+          if (diff > 0) {
+            // 長期離脱でも 1 年分まで
+            get().advanceDays(Math.min(diff, 360));
+            set({ lastRealDate: today });
+          } else if (diff < 0) {
+            // 時計が巻き戻った場合はスタンプだけ合わせる
+            set({ lastRealDate: today });
+          }
+        },
+
+        setGrowthSpeed: (v) => {
+          set((st) => ({ settings: { ...st.settings, growthSpeed: v } }));
         },
 
         waterPlant: (id) => {
           const p = get().plants[id];
           if (!p || p.stage === "dead") return;
-          if (!spend(ACTION_TIME.water, "水やり")) return;
           set((s) => ({
             plants: {
               ...s.plants,
@@ -303,7 +351,6 @@ export const useGame = create<GameStore>()(
             set({ toast: "液肥が無い。ショップで買おう" });
             return;
           }
-          if (!spend(ACTION_TIME.liquidFert, "液肥")) return;
           set((st) => ({
             inventory: { ...st.inventory, liquidFert: st.inventory.liquidFert - 1 },
             plants: { ...st.plants, [id]: { ...p, liquidFertDays: FERT_SPEC.liquid.days } },
@@ -318,7 +365,6 @@ export const useGame = create<GameStore>()(
           if (s.inventory.pots[pot] <= 0) return set({ toast: "その鉢の在庫が無い" });
           if (s.inventory.soil[soil] <= 0) return set({ toast: "その土の在庫が無い" });
           if (baseFert && s.inventory.baseFert <= 0) return set({ toast: "元肥が無い" });
-          if (!spend(ACTION_TIME.repot, "植え替え")) return;
           set((st) => ({
             inventory: {
               ...st.inventory,
@@ -349,7 +395,6 @@ export const useGame = create<GameStore>()(
           if (!p || p.stage !== "plant") return;
           const price = salePrice(p, s.market);
           if (price <= 0) return set({ toast: "まだ売り物にならないサイズだ" });
-          if (!spend(ACTION_TIME.sell, "販売")) return;
           const cleaned = removeFromSlots(s, id);
           const plants = { ...s.plants };
           delete plants[id];
@@ -377,7 +422,6 @@ export const useGame = create<GameStore>()(
           const s = get();
           const p = s.plants[id];
           if (!p) return;
-          if (!spend(ACTION_TIME.discard, "廃棄")) return;
           const cleaned = removeFromSlots(s, id);
           const plants = { ...s.plants };
           delete plants[id];
@@ -395,7 +439,6 @@ export const useGame = create<GameStore>()(
           const p = s.plants[id];
           if (!p || !p.pest) return;
           if (!pay(200, "薬剤代 ¥200")) return;
-          if (!spend(ACTION_TIME.pestControl, "害虫駆除")) return;
           set((st) => ({
             plants: { ...st.plants, [id]: { ...p, pest: false } },
             toast: `🧴 ${p.name} の害虫を駆除した`,
@@ -410,13 +453,12 @@ export const useGame = create<GameStore>()(
           if (s.inventory.pots[pot] <= 0) return set({ toast: "鉢が無い" });
           if (s.inventory.soil[soil] <= 0) return set({ toast: "土が無い" });
           if (baseFert && s.inventory.baseFert <= 0) return set({ toast: "元肥が無い" });
-          if (!spend(ACTION_TIME.sow, "種まき")) return;
 
           const serial = (s.serials[speciesId] ?? 0) + 1;
           const plant = makePlant({ sp, day: s.day, serial, asPup: false, potSize: pot, soil, baseFert });
           const placed = putToTarget(s, plant.id, target);
           if (!placed) {
-            set({ toast: "その場所には置けない", timeLeft: get().timeLeft + ACTION_TIME.sow });
+            set({ toast: "その場所には置けない" });
             return;
           }
           set({
@@ -439,11 +481,10 @@ export const useGame = create<GameStore>()(
           const s = get();
           const p = s.plants[id];
           if (!p) return;
-          if (!spend(ACTION_TIME.movePlant, "株の移動")) return;
           const cleaned = removeFromSlots(s, id);
           const placed = putToTarget(cleaned, id, target);
           if (!placed) {
-            set({ toast: "その場所には置けない", timeLeft: get().timeLeft + ACTION_TIME.movePlant });
+            set({ toast: "その場所には置けない" });
             return;
           }
           set({ ...placed, movingPlantId: null, toast: `↔️ ${p.name} を移動した` });
@@ -454,7 +495,6 @@ export const useGame = create<GameStore>()(
           if (s.inventory.shelves[kind] <= 0) return set({ toast: "棚の在庫が無い" });
           if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
           if (s.shelves.some((sh) => sh.x === x && sh.y === y)) return set({ toast: "そこには既に棚がある" });
-          if (!spend(ACTION_TIME.placeShelf, "棚の設置")) return;
           const spec = SHELF_SPEC[kind];
           const shelf: Shelf = {
             id: uid("shelf"),
@@ -482,7 +522,6 @@ export const useGame = create<GameStore>()(
           if (shelf.levels.some((lv) => lv.slots.some((p) => p !== null))) {
             return set({ toast: "株が載っている棚は撤去できない" });
           }
-          if (!spend(ACTION_TIME.removeShelf, "棚の撤去")) return;
           const ledsBack = { ...s.inventory.leds };
           for (const lv of shelf.levels) {
             if (lv.led) ledsBack[lv.led.power] += 1;
@@ -503,7 +542,6 @@ export const useGame = create<GameStore>()(
         installLed: (shelfId, level, power) => {
           const s = get();
           if (s.inventory.leds[power] <= 0) return set({ toast: "そのLEDの在庫が無い" });
-          if (!spend(ACTION_TIME.installLed, "LED取付")) return;
           set({
             shelves: s.shelves.map((sh) =>
               sh.id !== shelfId
@@ -525,7 +563,6 @@ export const useGame = create<GameStore>()(
           const shelf = s.shelves.find((sh) => sh.id === shelfId);
           const led = shelf?.levels[level]?.led;
           if (!shelf || !led) return;
-          if (!spend(ACTION_TIME.installLed, "LED取外")) return;
           set({
             shelves: s.shelves.map((sh) =>
               sh.id !== shelfId
@@ -649,7 +686,9 @@ export const useGame = create<GameStore>()(
         },
 
         resetGame: () => {
-          set({ ...initialGame(), view: "room", activeShelfId: null, selectedPlantId: null, showHelp: true, showReport: false });
+          // 設定 (成長速度) はリセットしても引き継ぐ
+          const settings = get().settings;
+          set({ ...initialGame(), settings, view: "room", activeShelfId: null, selectedPlantId: null, showHelp: true, showReport: false });
         },
       };
     },
@@ -660,7 +699,8 @@ export const useGame = create<GameStore>()(
       partialize: (s) => ({
         day: s.day,
         money: s.money,
-        timeLeft: s.timeLeft,
+        lastRealDate: s.lastRealDate,
+        settings: s.settings,
         plants: s.plants,
         bench: s.bench,
         shelves: s.shelves,

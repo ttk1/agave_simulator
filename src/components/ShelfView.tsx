@@ -46,13 +46,13 @@ export function ShelfView() {
         ))}
         <div style={{ flex: 1 }} />
         <button className="danger" onClick={() => removeShelf(shelf.id)}>
-          棚を撤去 (30分)
+          棚を撤去
         </button>
       </div>
 
       {moving && (
         <div className="picking-banner">
-          <span>↔️ {moving.name} の移動先スロットをクリック (他の棚タブへ切替も可・2分)</span>
+          <span>↔️ {moving.name} の移動先スロットをクリック (他の棚タブへ切替も可)</span>
           <button onClick={() => startMove(null)}>キャンセル</button>
         </div>
       )}
@@ -101,7 +101,7 @@ export function ShelfView() {
                 列{lv.led.col + 1}
               </label>
               <span className="muted">電気代 ¥{LED_SPEC[lv.led.power].elecPerDay}/日</span>
-              <button onClick={() => uninstallLed(shelf.id, li)}>取り外す (10分)</button>
+              <button onClick={() => uninstallLed(shelf.id, li)}>取り外す</button>
             </>
           ) : (
             <>

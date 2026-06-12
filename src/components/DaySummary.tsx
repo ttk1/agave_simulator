@@ -8,13 +8,20 @@ export function DaySummary() {
   const closeReport = useGame((s) => s.closeReport);
 
   if (!showReport || !report) return null;
+  const days = report.days ?? 1;
 
   return (
     <div className="modal-bg" onClick={closeReport}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>🌙 {dateLabel(report.day)} の夜</h2>
+        <h2>
+          {days > 1
+            ? `🗓️ おかえりなさい！ ${days}日が経過 (${dateLabel(report.day)} 〜)`
+            : `🌙 ${dateLabel(report.day)} の夜`}
+        </h2>
         {report.lines.length === 0 ? (
-          <div className="report-line">穏やかな一日だった。植物たちは静かに育っている…</div>
+          <div className="report-line">
+            {days > 1 ? "留守の間、植物たちは静かに育っていた…" : "穏やかな一日だった。植物たちは静かに育っている…"}
+          </div>
         ) : (
           report.lines.map((l, i) => (
             <div className="report-line" key={i}>

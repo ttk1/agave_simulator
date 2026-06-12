@@ -5,6 +5,7 @@ import { HelpModal } from "./components/HelpModal";
 import { Hud } from "./components/Hud";
 import { PlantPanel } from "./components/PlantPanel";
 import { RoomView } from "./components/RoomView";
+import { SettingsModal } from "./components/SettingsModal";
 import { ShelfView } from "./components/ShelfView";
 import { Shop } from "./components/Shop";
 import { SowDialog } from "./components/SowDialog";
@@ -22,6 +23,13 @@ export function App() {
     }
   }, []);
 
+  // 現実の日付と同期: 起動時 + 1分ごとにチェック (日をまたいでも反映される)
+  useEffect(() => {
+    useGame.getState().syncRealDay();
+    const t = setInterval(() => useGame.getState().syncRealDay(), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <div className="app">
       <Hud />
@@ -36,6 +44,7 @@ export function App() {
       </div>
       <SowDialog />
       <DaySummary />
+      <SettingsModal />
       <HelpModal />
       <Toast />
     </div>

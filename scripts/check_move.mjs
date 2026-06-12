@@ -76,13 +76,13 @@ for (const [fx, fy] of candidates) {
   moved = await page.evaluate(() => {
     const s = window.__game.getState();
     const slots = s.shelves[0].levels.map((lv) => lv.slots);
-    return { slots, moving: s.movingPlantId, timeLeft: s.timeLeft };
+    return { slots, moving: s.movingPlantId };
   });
   if (moved.slots[0][0] === null) break;
 }
-console.log("移動後の配置:", JSON.stringify(moved.slots), "残り時間:", moved.timeLeft);
-const ok = moved.slots[0][0] === null && moved.slots.flat().includes("mv_test") && moved.timeLeft === 478;
+console.log("移動後の配置:", JSON.stringify(moved.slots));
+const ok = moved.slots[0][0] === null && moved.slots.flat().includes("mv_test");
 await page.screenshot({ path: "/app/.verify/move_after.png" });
-console.log(ok ? "RESULT: OK (移動成功・2分消費)" : "RESULT: NG");
+console.log(ok ? "RESULT: OK (移動成功)" : "RESULT: NG");
 await browser.close();
 process.exit(ok ? 0 : 1);

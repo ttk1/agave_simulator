@@ -1,37 +1,18 @@
 import type { LedPower, PotSize, ShelfKind, SoilType, SpeciesDef } from "./types";
 
-// ===== 時間・行動 =====
+// ===== 時間の進み方 =====
 
-/** 1日に使える時間 (分) */
-export const DAY_MINUTES = 480;
-
-export const ACTION_TIME = {
-  water: 3,
-  sow: 10,
-  repot: 20,
-  liquidFert: 5,
-  sell: 15,
-  placeShelf: 30,
-  removeShelf: 30,
-  installLed: 10,
-  movePlant: 2,
-  discard: 5,
-  pestControl: 10,
-} as const;
-
-export const ACTION_LABEL: Record<keyof typeof ACTION_TIME, string> = {
-  water: "水やり",
-  sow: "種まき",
-  repot: "植え替え",
-  liquidFert: "液肥",
-  sell: "販売",
-  placeShelf: "棚の設置",
-  removeShelf: "棚の撤去",
-  installLed: "LED取付",
-  movePlant: "株の移動",
-  discard: "廃棄",
-  pestControl: "害虫駆除",
-};
+/**
+ * 成長速度の選択肢。日々のシミュレーション自体は 1日 = 現実の1日 (または
+ * 「次の日へ」) で進み、この倍率は成長量にだけ掛かる。
+ */
+export const GROWTH_SPEED_OPTIONS: { value: number; label: string; desc: string }[] = [
+  { value: 0.25, label: "リアル", desc: "現実の園芸に近いペース。1枚の葉に数週間" },
+  { value: 0.5, label: "のんびり", desc: "じっくり長く楽しみたい人向け" },
+  { value: 1, label: "標準", desc: "数ヶ月で販売サイズに育つ" },
+  { value: 2, label: "はやめ", desc: "テンポよく育てたい人向け" },
+  { value: 4, label: "せっかち", desc: "サクサク育つ。経営ゲーム感覚で" },
+];
 
 // ===== 部屋 =====
 

@@ -46,7 +46,7 @@ export function RoomView() {
       {placingShelf && (
         <div className="picking-banner">
           <span>
-            📦 {SHELF_SPEC[placingShelf].name} を置く場所をクリック (設置 {30}分)
+            📦 {SHELF_SPEC[placingShelf].name} を置く場所をクリック
           </span>
           <button onClick={() => setPlacingShelf(null)}>キャンセル</button>
         </div>

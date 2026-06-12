@@ -1,4 +1,3 @@
-import { DAY_MINUTES } from "../game/constants";
 import { fmtMoney } from "../game/economy";
 import { dateLabel, ledHeat, roomHumidity, roomTemp, SEASON_LABEL, seasonOf } from "../game/environment";
 import { useGame } from "../game/store";
@@ -6,7 +5,6 @@ import { useGame } from "../game/store";
 export function Hud() {
   const day = useGame((s) => s.day);
   const money = useGame((s) => s.money);
-  const timeLeft = useGame((s) => s.timeLeft);
   const market = useGame((s) => s.market);
   const devices = useGame((s) => s.devices);
   const shelves = useGame((s) => s.shelves);
@@ -14,6 +12,7 @@ export function Hud() {
   const setView = useGame((s) => s.setView);
   const nextDay = useGame((s) => s.nextDay);
   const setShowHelp = useGame((s) => s.setShowHelp);
+  const setShowSettings = useGame((s) => s.setShowSettings);
 
   const temp = roomTemp(day, devices, shelves);
   const heat = ledHeat(shelves);
@@ -46,14 +45,6 @@ export function Hud() {
           ×{market.toFixed(2)}
         </span>
       </div>
-      <div className="stat" style={{ minWidth: 140 }}>
-        <span className="label">
-          残り時間 {Math.floor(timeLeft / 60)}h{String(timeLeft % 60).padStart(2, "0")}m
-        </span>
-        <div className="timebar">
-          <div style={{ width: `${(timeLeft / DAY_MINUTES) * 100}%` }} />
-        </div>
-      </div>
       <div className="spacer" />
       <button className={view === "room" ? "tab active" : "tab"} onClick={() => setView("room")}>
         🏠 部屋
@@ -64,8 +55,11 @@ export function Hud() {
       <button className={view === "collection" ? "tab active" : "tab"} onClick={() => setView("collection")}>
         📖 図鑑
       </button>
+      <button onClick={() => setShowSettings(true)} title="設定">
+        ⚙️
+      </button>
       <button onClick={() => setShowHelp(true)}>❓</button>
-      <button className="primary" onClick={nextDay}>
+      <button className="primary" onClick={nextDay} title="待てない人向け。現実の日付が変わると自動でも進む">
         🌙 次の日へ
       </button>
     </div>

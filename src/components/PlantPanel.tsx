@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ACTION_TIME, POT_SPEC, SOIL_SPEC, SPECIES_MAP, TIER_LABEL } from "../game/constants";
+import { POT_SPEC, SOIL_SPEC, SPECIES_MAP, TIER_LABEL } from "../game/constants";
 import { fmtMoney, salePrice } from "../game/economy";
 import { lightLabel, roomTemp, slotLight } from "../game/environment";
 import { formQuality, qualityStars } from "../game/genetics";
@@ -139,13 +139,13 @@ export function PlantPanel() {
         <div className="card">
           <h3 style={{ marginTop: 0 }}>🛠️ 作業</h3>
           <div className="row">
-            <button onClick={() => waterPlant(plant.id)}>💧 水やり ({ACTION_TIME.water}分)</button>
+            <button onClick={() => waterPlant(plant.id)}>💧 水やり</button>
             <button onClick={() => feedLiquid(plant.id)} disabled={inventory.liquidFert <= 0}>
-              🧪 液肥 ({ACTION_TIME.liquidFert}分・在庫{inventory.liquidFert})
+              🧪 液肥 (在庫{inventory.liquidFert})
             </button>
             {plant.pest && (
               <button className="danger" onClick={() => curePest(plant.id)}>
-                🧴 害虫駆除 ({ACTION_TIME.pestControl}分+¥200)
+                🧴 害虫駆除 (¥200)
               </button>
             )}
             <button
@@ -160,9 +160,9 @@ export function PlantPanel() {
                 startMove(plant.id);
               }}
             >
-              ↔️ 移動 ({ACTION_TIME.movePlant}分)
+              ↔️ 移動
             </button>
-            <button onClick={() => setRepotOpen(!repotOpen)}>🪴 植え替え ({ACTION_TIME.repot}分)</button>
+            <button onClick={() => setRepotOpen(!repotOpen)}>🪴 植え替え</button>
           </div>
 
           {repotOpen && (
@@ -215,7 +215,7 @@ export function PlantPanel() {
               <span className="muted"> (相場×{market.toFixed(2)})</span>
             </span>
             <button className="primary" onClick={() => sellPlant(plant.id)}>
-              販売する ({ACTION_TIME.sell}分)
+              販売する
             </button>
           </div>
         ) : (
@@ -223,7 +223,7 @@ export function PlantPanel() {
         )}
         <div style={{ marginTop: 8 }}>
           <button className="danger" onClick={() => discardPlant(plant.id)}>
-            🗑️ 廃棄する ({ACTION_TIME.discard}分)
+            🗑️ 廃棄する
           </button>
         </div>
       </div>

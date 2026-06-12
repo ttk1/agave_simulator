@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ACTION_TIME, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "../game/constants";
+import { POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "../game/constants";
 import { useGame } from "../game/store";
 import type { PotSize, SoilType } from "../game/types";
 
@@ -25,7 +25,7 @@ export function SowDialog() {
   return (
     <div className="modal-bg" onClick={() => setSowTarget(null)}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>🌰 種をまく ({ACTION_TIME.sow}分)</h2>
+        <h2>🌰 種をまく</h2>
         {seedIds.length === 0 ? (
           <>
             <p className="muted">種を持っていない。</p>

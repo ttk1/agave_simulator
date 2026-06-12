@@ -131,10 +131,18 @@ export interface CollectionEntry {
 }
 
 export interface DayReport {
+  /** 期間の開始日 */
   day: number;
+  /** 経過日数 (省略時 1) */
+  days?: number;
   lines: string[];
   electricity: number;
   income: number;
+}
+
+export interface Settings {
+  /** 成長速度の倍率 */
+  growthSpeed: number;
 }
 
 export interface SpeciesDef {

@@ -31,6 +31,7 @@ export function tickDay(
   plants: Record<string, Plant>,
   shelves: Shelf[],
   devices: Devices,
+  growthSpeed = 1,
 ): TickResult {
   const lines: string[] = [];
   const temp = roomTemp(day, devices, shelves);
@@ -142,7 +143,7 @@ export function tickDay(
 
     const pts =
       10 * (0.5 + p.genetics.growth * 0.9) * tempGrowF * lightF * moistF * fertF * stressF * rootF * healthF * stageF;
-    p.growthProgress += pts;
+    p.growthProgress += pts * growthSpeed;
 
     const threshold = 26 + p.leaves.length * 1.3;
     if (p.growthProgress >= threshold) {
