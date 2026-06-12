@@ -93,14 +93,22 @@ const growWith = async (mult) => {
     },
     { plant: mkPlant(), mult },
   );
-  return page.evaluate(() => window.__game.getState().plants["rt_test"].growthProgress);
+  return page.evaluate(() => {
+    const s = window.__game.getState();
+    return { growth: s.plants["rt_test"].growthProgress, elec: s.report.electricity };
+  });
 };
-const g1 = await growWith(1);
+const r1 = await growWith(1);
 await page.evaluate(() => window.__game.getState().closeReport());
-const g4 = await growWith(4);
+const r4 = await growWith(4);
 await page.evaluate(() => window.__game.getState().closeReport());
-const ratio = g4 / g1;
-check("成長量が約4倍", ratio > 3.5 && ratio < 4.5, `(×1: ${g1.toFixed(1)}pt, ×4: ${g4.toFixed(1)}pt, 比 ${ratio.toFixed(2)})`);
+const ratio = r4.growth / r1.growth;
+check("成長量が約4倍", ratio > 3.5 && ratio < 4.5, `(×1: ${r1.growth.toFixed(1)}pt, ×4: ${r4.growth.toFixed(1)}pt, 比 ${ratio.toFixed(2)})`);
+check(
+  "電気代も4倍 (1株あたりコスト一定)",
+  r4.elec === r1.elec * 4,
+  `(×1: ¥${r1.elec}/日, ×4: ¥${r4.elec}/日)`,
+);
 
 await page.screenshot({ path: "/app/.verify/realtime_check.png" });
 await browser.close();

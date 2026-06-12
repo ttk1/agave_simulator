@@ -64,7 +64,8 @@ export function tickDay(
         }
       }
       const tempOk = temp >= 17 && temp <= 34;
-      if (tempOk && p.moisture > 0.3 && day - p.sownDay >= sp.germDays) {
+      // 発芽日数も成長速度でスケール (経過日 × 倍率 が必要日数に達したら)
+      if (tempOk && p.moisture > 0.3 && (day - p.sownDay) * growthSpeed >= sp.germDays) {
         if (Math.random() < 0.45) {
           p.stage = "seedling";
           p.leaves.push(growLeaf(p.genetics, 0.65, false, day));
@@ -108,8 +109,8 @@ export function tickDay(
       lines.push(`⚠️ ${p.name} の根が腐り始めている！ 乾かして様子を見よう`);
     }
 
-    // --- 害虫 ---
-    if (!p.pest && humidity > 0.65 && !airflow && Math.random() < 0.025) {
+    // --- 害虫 (発生率は成長速度に比例 = 1株の育成期間あたりの発生数を一定に) ---
+    if (!p.pest && humidity > 0.65 && !airflow && Math.random() < Math.min(0.12, 0.025 * growthSpeed)) {
       p.pest = true;
       lines.push(`🐛 ${p.name} にカイガラムシが発生！ 駆除しよう`);
     }
@@ -165,10 +166,10 @@ export function tickDay(
       lines.push(`🪨 ${p.name} が根詰まり気味。大きい鉢に植え替えよう`);
     }
 
-    // --- 肥料・ストレスの消化 ---
-    if (p.baseFertDays > 0) p.baseFertDays -= 1;
-    if (p.liquidFertDays > 0) p.liquidFertDays -= 1;
-    if (p.stressDays > 0) p.stressDays -= 1;
+    // --- 肥料・ストレスの消化 (植物の体感時間 = 成長速度でスケール) ---
+    if (p.baseFertDays > 0) p.baseFertDays = Math.max(0, p.baseFertDays - growthSpeed);
+    if (p.liquidFertDays > 0) p.liquidFertDays = Math.max(0, p.liquidFertDays - growthSpeed);
+    if (p.stressDays > 0) p.stressDays = Math.max(0, p.stressDays - growthSpeed);
   }
 
   // --- 電気代 ---
@@ -181,6 +182,10 @@ export function tickDay(
   if (devices.heater && devices.heaterOn) electricity += DEVICE_SPEC.heater.elecPerDay;
   if (devices.circulator && devices.circulatorOn) electricity += DEVICE_SPEC.circulator.elecPerDay;
   electricity += airconCost(day, devices, shelves);
+
+  // 電気代も成長速度に比例させる。「1株を売れるサイズにするまでの総コスト」が
+  // 倍率によらず一定になり、成長速度が実質的な難易度設定にならないようにする
+  electricity = Math.round(electricity * growthSpeed);
 
   return { lines, electricity };
 }

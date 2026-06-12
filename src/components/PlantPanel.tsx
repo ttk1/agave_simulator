@@ -28,6 +28,9 @@ export function PlantPanel() {
   const inventory = useGame((s) => s.inventory);
   const day = useGame((s) => s.day);
   const devices = useGame((s) => s.devices);
+  const growthSpeed = useGame((s) => s.settings.growthSpeed);
+  /** 成長日数 → 現実の残り日数 */
+  const realDays = (growthDays: number) => Math.max(0, Math.ceil(growthDays / growthSpeed));
   const selectPlant = useGame((s) => s.selectPlant);
   const waterPlant = useGame((s) => s.waterPlant);
   const feedLiquid = useGame((s) => s.feedLiquid);
@@ -83,7 +86,7 @@ export function PlantPanel() {
             {dead
               ? "💀 枯死"
               : plant.stage === "seed"
-                ? `🌰 種 (あと${Math.max(0, sp.germDays - (day - plant.sownDay))}日前後で発芽${
+                ? `🌰 種 (あと${realDays(sp.germDays - (day - plant.sownDay) * growthSpeed)}日前後で発芽${
                     roomTemp(day, devices, shelves) < 17 ? "・室温17°C以上が必要!" : plant.moisture < 0.3 ? "・水分不足!" : ""
                   })`
                 : plant.stage === "seedling"
@@ -107,8 +110,8 @@ export function PlantPanel() {
         <div className="stat-row">
           <span className="name">肥料</span>
           <span>
-            元肥 {plant.baseFertDays > 0 ? `残${plant.baseFertDays}日` : "なし"} ／ 液肥{" "}
-            {plant.liquidFertDays > 0 ? `残${plant.liquidFertDays}日` : "なし"}
+            元肥 {plant.baseFertDays > 0 ? `残${realDays(plant.baseFertDays)}日` : "なし"} ／ 液肥{" "}
+            {plant.liquidFertDays > 0 ? `残${realDays(plant.liquidFertDays)}日` : "なし"}
           </span>
         </div>
         <div className="stat-row">

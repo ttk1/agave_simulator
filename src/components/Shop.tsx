@@ -7,6 +7,9 @@ export function Shop() {
   const money = useGame((s) => s.money);
   const inventory = useGame((s) => s.inventory);
   const devices = useGame((s) => s.devices);
+  const growthSpeed = useGame((s) => s.settings.growthSpeed);
+  /** 電気代の表示は成長速度倍率込みで */
+  const elec = (perDay: number) => Math.round(perDay * growthSpeed);
   const buySeed = useGame((s) => s.buySeed);
   const buyPup = useGame((s) => s.buyPup);
   const buyPot = useGame((s) => s.buyPot);
@@ -108,7 +111,7 @@ export function Shop() {
           <div className="shop-item" key={p}>
             <div className="title">{LED_SPEC[p].name}</div>
             <div className="muted">
-              電気代 ¥{LED_SPEC[p].elecPerDay}/日。棚画面で取付・位置調整 (所持 ×{inventory.leds[p]})
+              電気代 ¥{elec(LED_SPEC[p].elecPerDay)}/日。棚画面で取付・位置調整 (所持 ×{inventory.leds[p]})
             </div>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <span className="price">{fmtMoney(LED_SPEC[p].price)}</span>
@@ -134,7 +137,7 @@ export function Shop() {
         ))}
         <div className="shop-item">
           <div className="title">{DEVICE_SPEC.heater.name}</div>
-          <div className="muted">冬でも室温 20°C を保つ。電気代 ¥{DEVICE_SPEC.heater.elecPerDay}/日</div>
+          <div className="muted">冬でも室温 20°C を保つ。電気代 ¥{elec(DEVICE_SPEC.heater.elecPerDay)}/日</div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <span className="price">{fmtMoney(DEVICE_SPEC.heater.price)}</span>
             <button disabled={devices.heater || money < DEVICE_SPEC.heater.price} onClick={() => buyDevice("heater")}>
@@ -145,7 +148,7 @@ export function Shop() {
         <div className="shop-item">
           <div className="title">{DEVICE_SPEC.aircon.name}</div>
           <div className="muted">
-            室温を 27°C 以下に保つ。LED の発熱対策に。電気代 ¥{DEVICE_SPEC.aircon.elecPerDay}/日 + 冷却量に応じて加算
+            室温を 27°C 以下に保つ。LED の発熱対策に。電気代 ¥{elec(DEVICE_SPEC.aircon.elecPerDay)}/日 + 冷却量に応じて加算
           </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <span className="price">{fmtMoney(DEVICE_SPEC.aircon.price)}</span>
@@ -156,7 +159,7 @@ export function Shop() {
         </div>
         <div className="shop-item">
           <div className="title">{DEVICE_SPEC.circulator.name}</div>
-          <div className="muted">蒸れ・根腐れ・害虫を抑える。電気代 ¥{DEVICE_SPEC.circulator.elecPerDay}/日</div>
+          <div className="muted">蒸れ・根腐れ・害虫を抑える。電気代 ¥{elec(DEVICE_SPEC.circulator.elecPerDay)}/日</div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <span className="price">{fmtMoney(DEVICE_SPEC.circulator.price)}</span>
             <button

@@ -22,6 +22,7 @@ export function ShelfView() {
   const toggleLed = useGame((s) => s.toggleLed);
   const removeShelf = useGame((s) => s.removeShelf);
   const benchFull = useGame((s) => s.bench.length >= 8);
+  const growthSpeed = useGame((s) => s.settings.growthSpeed);
 
   const shelf = shelves.find((sh) => sh.id === activeShelfId) ?? shelves[0];
   if (!shelf) {
@@ -110,7 +111,7 @@ export function ShelfView() {
                 />
                 列{lv.led.col + 1}
               </label>
-              <span className="muted">電気代 ¥{LED_SPEC[lv.led.power].elecPerDay}/日</span>
+              <span className="muted">電気代 ¥{Math.round(LED_SPEC[lv.led.power].elecPerDay * growthSpeed)}/日</span>
               <button onClick={() => uninstallLed(shelf.id, li)}>取り外す</button>
             </>
           ) : (

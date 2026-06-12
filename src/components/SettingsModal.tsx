@@ -15,7 +15,11 @@ export function SettingsModal() {
         <h2>⚙️ 設定</h2>
 
         <h3>🌱 成長速度</h3>
-        <p className="muted">1日あたりの成長量の倍率。いつでも変更でき、変更後の日送りから反映される。</p>
+        <p className="muted">
+          1日あたりの成長量の倍率。いつでも変更でき、変更後の日送りから反映される。
+          電気代・肥料の消費・発芽日数も同じ倍率で進むため、
+          <strong>1株あたりの育成コストは速度によらず一定</strong> — 純粋にペースの好みで選んで OK。
+        </p>
         {GROWTH_SPEED_OPTIONS.map((opt) => (
           <label
             className="opt"
