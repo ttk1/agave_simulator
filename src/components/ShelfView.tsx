@@ -81,9 +81,15 @@ export function ShelfView() {
       </div>
 
       <h3>💡 各段の LED ライト</h3>
-      {shelf.levels.map((lv, li) => (
+      {/* 3D の見た目に合わせて上の段から並べる (li=0 が最下段) */}
+      {shelf.levels
+        .map((lv, li) => ({ lv, li }))
+        .reverse()
+        .map(({ lv, li }) => (
         <div className="led-row" key={li}>
-          <strong style={{ width: 46 }}>{li + 1}段目</strong>
+          <strong style={{ width: 70 }}>
+            {li + 1}段目{li === shelf.levels.length - 1 ? " (上)" : li === 0 ? " (下)" : ""}
+          </strong>
           {lv.led ? (
             <>
               <span>{LED_SPEC[lv.led.power].name}</span>
