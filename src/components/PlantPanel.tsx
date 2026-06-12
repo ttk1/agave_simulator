@@ -57,7 +57,7 @@ export function PlantPanel() {
   if (!plant) return null;
 
   const sp = SPECIES_MAP[plant.speciesId];
-  const light = place ? slotLight(place.shelf, place.level, place.col) : 0.05;
+  const light = place ? slotLight(place.shelf, place.level, place.col, day) : 0.05;
   const price = salePrice(plant, market);
   const g = plant.genetics;
   const dead = plant.stage === "dead";

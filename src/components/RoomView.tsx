@@ -1,6 +1,8 @@
-import { DEVICE_SPEC, ROOM_COLS, ROOM_ROWS, SHELF_SPEC } from "../game/constants";
+import { useState } from "react";
+import { DEVICE_SPEC, ROOM_COLS, ROOM_ROWS, SHELF_SPEC, WINDOW_X } from "../game/constants";
 import { useGame } from "../game/store";
 import type { Shelf } from "../game/types";
+import { RoomScene } from "../three/RoomScene";
 
 function ShelfCard({ shelf }: { shelf: Shelf }) {
   const openShelf = useGame((s) => s.openShelf);
@@ -37,14 +39,25 @@ export function RoomView() {
   const plants = useGame((s) => s.plants);
   const selectPlant = useGame((s) => s.selectPlant);
   const setView = useGame((s) => s.setView);
+  const openShelf = useGame((s) => s.openShelf);
+  const day = useGame((s) => s.day);
+  const [mode3d, setMode3d] = useState(false);
 
   const shelfAt = (x: number, y: number) => shelves.find((sh) => sh.x === x && sh.y === y);
 
   return (
     <div>
       <div className="view-head">
-        <h2>🏠 育成部屋のレイアウト</h2>
-        <span className="muted">棚をクリックで中を見る。棚の配置はあなた次第</span>
+        <h2>🏠 育成部屋</h2>
+        <button className={!mode3d ? "tab active" : "tab"} onClick={() => setMode3d(false)}>
+          🗺️ レイアウト
+        </button>
+        <button className={mode3d ? "tab active" : "tab"} onClick={() => setMode3d(true)}>
+          📷 3Dビュー
+        </button>
+        <span className="muted">
+          {mode3d ? "ドラッグで回転 / ホイールでズーム。棚をクリックで中を見る" : "窓際の棚は自然光ボーナスで電気代を節約できる"}
+        </span>
       </div>
       {placingShelf && (
         <div className="picking-banner">
@@ -55,25 +68,41 @@ export function RoomView() {
         </div>
       )}
 
-      <div className="room-grid" style={{ gridTemplateColumns: `repeat(${ROOM_COLS}, 1fr)` }}>
-        {Array.from({ length: ROOM_ROWS }).map((_, y) =>
-          Array.from({ length: ROOM_COLS }).map((_, x) => {
-            const shelf = shelfAt(x, y);
-            const placeable = !!placingShelf && !shelf;
-            return (
-              <div
-                key={`${x}-${y}`}
-                className={`room-cell${placeable ? " placeable" : ""}`}
-                onClick={() => {
-                  if (placeable && placingShelf) placeShelf(placingShelf, x, y);
-                }}
-              >
-                {shelf ? <ShelfCard shelf={shelf} /> : placeable ? <span className="muted">＋</span> : null}
+      {mode3d ? (
+        <div className="shelf-canvas">
+          <RoomScene shelves={shelves} plants={plants} day={day} onShelfClick={(id) => openShelf(id)} />
+        </div>
+      ) : (
+        <>
+          {/* 北壁の窓の位置 */}
+          <div className="window-row" style={{ gridTemplateColumns: `repeat(${ROOM_COLS}, 1fr)` }}>
+            {Array.from({ length: ROOM_COLS }).map((_, x) => (
+              <div key={x} className={x >= WINDOW_X[0] && x <= WINDOW_X[1] ? "window-mark" : "wall-mark"}>
+                {x === WINDOW_X[0] && "🪟 窓 (自然光)"}
               </div>
-            );
-          }),
-        )}
-      </div>
+            ))}
+          </div>
+          <div className="room-grid" style={{ gridTemplateColumns: `repeat(${ROOM_COLS}, 1fr)` }}>
+            {Array.from({ length: ROOM_ROWS }).map((_, y) =>
+              Array.from({ length: ROOM_COLS }).map((_, x) => {
+                const shelf = shelfAt(x, y);
+                const placeable = !!placingShelf && !shelf;
+                return (
+                  <div
+                    key={`${x}-${y}`}
+                    className={`room-cell${placeable ? " placeable" : ""}`}
+                    onClick={() => {
+                      if (placeable && placingShelf) placeShelf(placingShelf, x, y);
+                    }}
+                  >
+                    {shelf ? <ShelfCard shelf={shelf} /> : placeable ? <span className="muted">＋</span> : null}
+                  </div>
+                );
+              }),
+            )}
+          </div>
+        </>
+      )}
 
       <div className="cards-row">
         <div className="card">

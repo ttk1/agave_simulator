@@ -7,6 +7,7 @@ import {
   LED_HEAT,
   LED_HEAT_CAP,
   LED_SPEC,
+  WINDOW_X,
 } from "./constants";
 import type { Devices, Shelf } from "./types";
 
@@ -91,9 +92,29 @@ export function roomHumidity(day: number): number {
   return Math.max(0.25, Math.min(0.92, h));
 }
 
-/** 棚のあるスロットの光量を計算 (0..~1.2) */
-export function slotLight(shelf: Shelf, level: number, col: number): number {
-  let light = AMBIENT_LIGHT;
+/** 窓からの自然光の強さ (季節と天気で変わる) */
+export function sunStrength(day: number): number {
+  const doy = dayOfYear(day);
+  const seasonal = 0.3 + 0.09 * Math.sin(((doy + 20) / 360) * Math.PI * 2); // 夏に強い
+  const weather = 0.75 + 0.25 * Math.sin(day * 2.9); // 晴れ・曇りのゆらぎ
+  return Math.max(0.08, seasonal * weather);
+}
+
+/**
+ * 部屋の窓 (北壁 y=0 側、WINDOW_X の列) からの自然光ボーナス。
+ * 窓に近い棚ほど強く、棚板の影にならない最上段がよく当たる。
+ */
+export function windowBonus(shelf: Shelf, level: number, day: number): number {
+  const dx = shelf.x < WINDOW_X[0] ? WINDOW_X[0] - shelf.x : shelf.x > WINDOW_X[1] ? shelf.x - WINDOW_X[1] : 0;
+  const dist = shelf.y + dx * 0.7;
+  const falloff = 1 / (1 + dist * 1.1);
+  const levelF = level === shelf.levels.length - 1 ? 1 : 0.4;
+  return sunStrength(day) * falloff * levelF;
+}
+
+/** 棚のあるスロットの光量を計算 (0..~1.25) */
+export function slotLight(shelf: Shelf, level: number, col: number, day: number): number {
+  let light = AMBIENT_LIGHT + windowBonus(shelf, level, day);
   const lv = shelf.levels[level];
   if (lv && lv.led && lv.led.on) {
     const dist = Math.abs(col - lv.led.col);

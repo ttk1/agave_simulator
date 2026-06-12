@@ -19,6 +19,9 @@ export const GROWTH_SPEED_OPTIONS: { value: number; label: string; desc: string 
 export const ROOM_COLS = 6;
 export const ROOM_ROWS = 4;
 
+/** 北壁 (y=0 側) の窓が面する列の範囲 [開始, 終了] */
+export const WINDOW_X: [number, number] = [2, 3];
+
 export const SHELF_SPEC: Record<ShelfKind, { name: string; levels: number; cols: number; price: number }> = {
   small: { name: "スチールラック (小)", levels: 2, cols: 3, price: 6000 },
   large: { name: "メタルラック (大)", levels: 3, cols: 4, price: 15000 },

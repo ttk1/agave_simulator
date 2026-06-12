@@ -289,6 +289,34 @@ h3 {
   max-width: 68rem;
 }
 
+/* 北壁の窓マーカー */
+.window-row {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 68rem;
+  margin-bottom: 0.35rem;
+}
+
+.window-mark {
+  height: 1.3rem;
+  border-radius: 0.3rem;
+  background: linear-gradient(180deg, #2c4a6e, #1d3450);
+  border: 1px solid #3d6491;
+  color: #bcd4f5;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.wall-mark {
+  height: 1.3rem;
+  border-radius: 0.3rem;
+  background: #1a212b;
+}
+
 .room-cell {
   aspect-ratio: 1.25;
   border: 1px dashed #28344473;

@@ -42,7 +42,7 @@ export function tickDay(
   for (const p of Object.values(plants)) {
     if (p.stage === "dead") continue;
     const pos = placement.get(p.id);
-    const light = pos ? slotLight(pos.shelf, pos.level, pos.col) : 0.05;
+    const light = pos ? slotLight(pos.shelf, pos.level, pos.col, day) : 0.05;
     const soil = SOIL_SPEC[p.soil];
     const sp = SPECIES_MAP[p.speciesId];
 

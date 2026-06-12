@@ -23,6 +23,7 @@ export function HelpModal() {
         <div className="report-line">6️⃣ 💰 育った株を売って、強い LED・大きい棚・高級品種に投資しよう</div>
         <h3>コツ</h3>
         <ul className="muted" style={{ lineHeight: 1.7 }}>
+          <li>🪟 窓際に置いた棚は自然光ボーナス (最上段が特に有利)。LED の電気代を節約できる</li>
           <li>夏は蒸れ (サーキュレーター推奨)、冬は寒さ (ヒーター推奨) に注意</li>
           <li>LED は点けるほど室温が上がる。夏の高温対策にはエアコン (冷やした分だけ電気代増)</li>
           <li>鉢が大きいと乾きにくい。小苗は小鉢でスタート</li>

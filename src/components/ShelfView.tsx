@@ -23,6 +23,7 @@ export function ShelfView() {
   const removeShelf = useGame((s) => s.removeShelf);
   const benchFull = useGame((s) => s.bench.length >= 8);
   const growthSpeed = useGame((s) => s.settings.growthSpeed);
+  const day = useGame((s) => s.day);
 
   const shelf = shelves.find((sh) => sh.id === activeShelfId) ?? shelves[0];
   if (!shelf) {
@@ -66,6 +67,7 @@ export function ShelfView() {
         <ShelfScene
           shelf={shelf}
           plants={plants}
+          day={day}
           selectedPlantId={selectedPlantId}
           picking={!!movingPlantId}
           onSlotClick={(level, col, pid) => {
