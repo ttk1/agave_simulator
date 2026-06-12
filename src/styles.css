@@ -161,15 +161,12 @@ button.danger {
   color: #ffb4b2;
 }
 
-button.tab {
-  border-radius: 0.55rem 0.55rem 0 0;
-  border-bottom: none;
-}
-
+/* 選択状態を持つボタン (タブ・選択肢) */
 button.tab.active {
   background: #263244;
   border-color: var(--accent2);
   color: #bfe1ff;
+  box-shadow: inset 0 0 0 1px var(--accent2);
 }
 
 /* ===== メイン ===== */
