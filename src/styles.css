@@ -4,6 +4,7 @@
 
 :root {
   --bg: #0d1117;
+  --bg-outer: #07090d;
   --panel: #161d27;
   --panel2: #1d2633;
   --border: #2c3a4d;
@@ -16,30 +17,55 @@
   --gold: #e8c252;
 }
 
+/* 画面幅に応じて UI 全体をスケールさせる (rem 基準) */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 2100px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 3000px) {
+  html {
+    font-size: 20px;
+  }
+}
+
 html,
 body,
 #root {
   margin: 0;
   height: 100%;
-  background: var(--bg);
+  background: var(--bg-outer);
   color: var(--text);
   font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
-  font-size: 14px;
 }
 
+/* アプリ本体は中央寄せの最大幅カラム (超ワイド画面で間延びさせない) */
 .app {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  width: 100%;
+  max-width: 124rem;
+  margin: 0 auto;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  box-shadow: 0 0 70px rgba(0, 0, 0, 0.55);
+  font-size: 1rem;
 }
 
 /* ===== HUD ===== */
 .hud {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px 14px;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
@@ -49,23 +75,24 @@ body,
   font-weight: 800;
   letter-spacing: 1px;
   color: var(--accent);
-  font-size: 16px;
+  font-size: 1.15rem;
 }
 
 .hud .stat {
   display: flex;
   flex-direction: column;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .hud .stat .label {
-  font-size: 10px;
+  font-size: 0.72rem;
   color: var(--dim);
 }
 
 .hud .stat .value {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-size: 1rem;
 }
 
 .hud .money {
@@ -73,9 +100,9 @@ body,
 }
 
 .timebar {
-  width: 130px;
-  height: 8px;
-  border-radius: 4px;
+  width: 9.5rem;
+  height: 0.55rem;
+  border-radius: 0.3rem;
   background: #0a0e13;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -94,12 +121,12 @@ body,
 /* ===== ボタン ===== */
 button {
   font-family: inherit;
-  font-size: 13px;
-  border-radius: 8px;
+  font-size: 0.95rem;
+  border-radius: 0.55rem;
   border: 1px solid var(--border);
   background: var(--panel2);
   color: var(--text);
-  padding: 6px 12px;
+  padding: 0.42em 0.9em;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.05s;
 }
@@ -135,7 +162,7 @@ button.danger {
 }
 
 button.tab {
-  border-radius: 8px 8px 0 0;
+  border-radius: 0.55rem 0.55rem 0 0;
   border-bottom: none;
 }
 
@@ -155,46 +182,46 @@ button.tab.active {
 .content {
   flex: 1;
   overflow: auto;
-  padding: 14px;
+  padding: 1rem;
   min-width: 0;
 }
 
 .side {
-  width: 360px;
+  width: 27rem;
   flex-shrink: 0;
   border-left: 1px solid var(--border);
   background: var(--panel);
   overflow-y: auto;
-  padding: 12px;
+  padding: 0.9rem;
 }
 
 h2 {
-  font-size: 15px;
-  margin: 4px 0 10px;
+  font-size: 1.1rem;
+  margin: 0.3rem 0 0.75rem;
 }
 
 h3 {
-  font-size: 13px;
-  margin: 12px 0 6px;
+  font-size: 0.95rem;
+  margin: 0.9rem 0 0.45rem;
   color: var(--dim);
 }
 
 .muted {
   color: var(--dim);
-  font-size: 12px;
+  font-size: 0.86rem;
 }
 
 /* ===== 部屋ビュー ===== */
 .room-grid {
   display: grid;
-  gap: 8px;
-  max-width: 760px;
+  gap: 0.6rem;
+  max-width: 68rem;
 }
 
 .room-cell {
   aspect-ratio: 1.25;
   border: 1px dashed #2c3a4d;
-  border-radius: 10px;
+  border-radius: 0.7rem;
   background: #11161e;
   display: flex;
   align-items: center;
@@ -217,7 +244,7 @@ h3 {
 .shelf-card {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
+  border-radius: 0.7rem;
   border: 1px solid #3d5070;
   background: linear-gradient(180deg, #243042, #1a2330);
   cursor: pointer;
@@ -225,7 +252,7 @@ h3 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 0.3rem;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -235,18 +262,18 @@ h3 {
 }
 
 .shelf-card .icon {
-  font-size: 22px;
+  font-size: 1.6rem;
 }
 
 .shelf-card .count {
-  font-size: 11px;
+  font-size: 0.8rem;
   color: var(--dim);
 }
 
 /* ===== 棚ビュー ===== */
 .shelf-canvas {
-  height: 440px;
-  border-radius: 12px;
+  height: clamp(420px, 58vh, 880px);
+  border-radius: 0.85rem;
   overflow: hidden;
   border: 1px solid var(--border);
   background: #10151c;
@@ -255,12 +282,12 @@ h3 {
 .led-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
   background: var(--panel2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 6px;
+  border-radius: 0.55rem;
+  margin-top: 0.45rem;
   flex-wrap: wrap;
 }
 
@@ -268,25 +295,33 @@ input[type="range"] {
   accent-color: var(--accent2);
 }
 
+/* ===== 株ビューア ===== */
+.plant-viewer {
+  height: clamp(240px, 28vh, 460px);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1c2530, #10151c);
+}
+
 /* ===== カード・行 ===== */
 .row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.55rem;
   flex-wrap: wrap;
 }
 
 .card {
   background: var(--panel2);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 8px;
+  border-radius: 0.7rem;
+  padding: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .statbar {
-  height: 7px;
-  border-radius: 4px;
+  height: 0.5rem;
+  border-radius: 0.3rem;
   background: #0a0e13;
   overflow: hidden;
   flex: 1;
@@ -300,19 +335,19 @@ input[type="range"] {
 .stat-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 3px 0;
-  font-size: 12px;
+  gap: 0.55rem;
+  margin: 0.22rem 0;
+  font-size: 0.86rem;
 }
 
 .stat-row .name {
-  width: 72px;
+  width: 5.4rem;
   color: var(--dim);
   flex-shrink: 0;
 }
 
 .stat-row .num {
-  width: 44px;
+  width: 3.2rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -321,18 +356,18 @@ input[type="range"] {
 /* ===== ショップ ===== */
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.7rem;
 }
 
 .shop-item {
   background: var(--panel2);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 0.7rem;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.45rem;
 }
 
 .shop-item .title {
@@ -346,8 +381,8 @@ input[type="range"] {
 
 .badge {
   display: inline-block;
-  font-size: 10px;
-  padding: 1px 8px;
+  font-size: 0.72rem;
+  padding: 0.06em 0.7em;
   border-radius: 99px;
   border: 1px solid var(--border);
   color: var(--dim);
@@ -388,12 +423,13 @@ input[type="range"] {
 .modal {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  width: min(560px, 92vw);
+  border-radius: 1rem;
+  padding: 1.3rem;
+  width: min(42rem, 92vw);
   max-height: 84vh;
   overflow-y: auto;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+  font-size: 1rem;
 }
 
 .modal h2 {
@@ -401,28 +437,29 @@ input[type="range"] {
 }
 
 .report-line {
-  padding: 5px 8px;
-  border-radius: 6px;
-  margin: 3px 0;
+  padding: 0.36rem 0.6rem;
+  border-radius: 0.45rem;
+  margin: 0.22rem 0;
   background: var(--panel2);
-  font-size: 13px;
+  font-size: 0.93rem;
 }
 
 /* ===== トースト ===== */
 .toast {
   position: fixed;
-  bottom: 18px;
+  bottom: 1.3rem;
   left: 50%;
   transform: translateX(-50%);
   background: #0f2a1c;
   color: #b7f7d4;
   border: 1px solid var(--accent);
-  padding: 9px 18px;
+  padding: 0.65rem 1.3rem;
   border-radius: 99px;
   z-index: 200;
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
   animation: toast-in 0.18s ease-out;
   max-width: 88vw;
+  font-size: 1rem;
 }
 
 @keyframes toast-in {
@@ -439,34 +476,35 @@ input[type="range"] {
 /* ===== 図鑑 ===== */
 .collection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.7rem;
 }
 
 select {
   font-family: inherit;
+  font-size: 0.95rem;
   background: var(--panel2);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 5px 8px;
+  border-radius: 0.55rem;
+  padding: 0.35em 0.6em;
 }
 
 label.opt {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.45rem;
+  font-size: 0.95rem;
 }
 
 .picking-banner {
   background: #102a40;
   border: 1px solid var(--accent2);
   color: #bfe1ff;
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 0.7rem;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.7rem;
 }

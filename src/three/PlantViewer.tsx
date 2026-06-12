@@ -6,14 +6,14 @@ import { plantRadius } from "./agaveGeometry";
 import { AgaveMesh } from "./AgaveMesh";
 
 /** 株 1 鉢をぐるぐる眺められるフォトビューア */
-export function PlantViewer({ plant, height = 260 }: { plant: Plant; height?: number }) {
+export function PlantViewer({ plant }: { plant: Plant }) {
   const dist = useMemo(() => {
     const r = Math.max(0.6, plantRadius(plant.leafScale, plant.leaves));
     return r * 2.6 + 0.8;
   }, [plant]);
 
   return (
-    <div style={{ height, borderRadius: 12, overflow: "hidden", background: "linear-gradient(180deg,#1c2530,#10151c)" }}>
+    <div className="plant-viewer">
       <Canvas shadows camera={{ position: [dist * 0.8, dist * 0.55, dist * 0.8], fov: 40 }}>
         <Suspense fallback={null}>
           <ambientLight intensity={0.55} />
