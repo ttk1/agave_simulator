@@ -37,6 +37,7 @@ export function PlantPanel() {
   const curePest = useGame((s) => s.curePest);
   const startMove = useGame((s) => s.startMove);
   const setView = useGame((s) => s.setView);
+  const openShelf = useGame((s) => s.openShelf);
 
   const [repotOpen, setRepotOpen] = useState(false);
   const [repotPot, setRepotPot] = useState<PotSize>(2);
@@ -149,8 +150,14 @@ export function PlantPanel() {
             )}
             <button
               onClick={() => {
+                // setView/openShelf は movingPlantId をリセットするため、
+                // 必ず view を切り替えてから移動モードに入れる
+                if (place) {
+                  openShelf(place.shelf.id);
+                } else {
+                  setView("shelf");
+                }
                 startMove(plant.id);
-                setView("shelf");
               }}
             >
               ↔️ 移動 ({ACTION_TIME.movePlant}分)
