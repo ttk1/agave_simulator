@@ -16,7 +16,7 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
   return (
     <div className="shelf-card" onClick={() => openShelf(shelf.id)} title={SHELF_SPEC[shelf.kind].name}>
       <div className="icon">{shelf.kind === "large" ? "🗄️" : "🪜"}</div>
-      <div style={{ fontWeight: 700, fontSize: 12 }}>{shelf.name}</div>
+      <div className="name">{shelf.name}</div>
       <div className="count">
         🪴 {count} ／ 💡 {leds}
         {alerts > 0 && <span style={{ color: "var(--danger)" }}> ⚠️{alerts}</span>}
@@ -42,7 +42,10 @@ export function RoomView() {
 
   return (
     <div>
-      <h2>🏠 育成部屋のレイアウト</h2>
+      <div className="view-head">
+        <h2>🏠 育成部屋のレイアウト</h2>
+        <span className="muted">棚をクリックで中を見る。棚の配置はあなた次第</span>
+      </div>
       {placingShelf && (
         <div className="picking-banner">
           <span>
@@ -72,11 +75,11 @@ export function RoomView() {
         )}
       </div>
 
-      <div className="row" style={{ marginTop: 14, alignItems: "flex-start" }}>
-        <div className="card" style={{ minWidth: 250 }}>
-          <h3 style={{ marginTop: 0 }}>📦 未設置の棚</h3>
+      <div className="cards-row">
+        <div className="card">
+          <h3>📦 未設置の棚</h3>
           {(Object.keys(SHELF_SPEC) as Array<keyof typeof SHELF_SPEC>).map((kind) => (
-            <div className="row" key={kind} style={{ marginBottom: 6 }}>
+            <div className="row" key={kind} style={{ marginBottom: "0.45rem" }}>
               <span style={{ flex: 1 }}>
                 {SHELF_SPEC[kind].name} × {inventory.shelves[kind]}
               </span>
@@ -93,10 +96,10 @@ export function RoomView() {
           )}
         </div>
 
-        <div className="card" style={{ minWidth: 250 }}>
-          <h3 style={{ marginTop: 0 }}>⚙️ 環境設備</h3>
+        <div className="card">
+          <h3>⚙️ 環境設備</h3>
           {devices.heater ? (
-            <div className="row" style={{ marginBottom: 6 }}>
+            <div className="row" style={{ marginBottom: "0.45rem" }}>
               <span style={{ flex: 1 }}>🔥 {DEVICE_SPEC.heater.name}</span>
               <button onClick={() => toggleDevice("heaterOn")}>{devices.heaterOn ? "ON" : "OFF"}</button>
             </div>
@@ -104,7 +107,7 @@ export function RoomView() {
             <div className="muted">🔥 ヒーター未所持 (冬の保温に)</div>
           )}
           {devices.circulator ? (
-            <div className="row" style={{ marginBottom: 6 }}>
+            <div className="row" style={{ marginBottom: "0.45rem" }}>
               <span style={{ flex: 1 }}>🌀 {DEVICE_SPEC.circulator.name}</span>
               <button onClick={() => toggleDevice("circulatorOn")}>{devices.circulatorOn ? "ON" : "OFF"}</button>
             </div>
@@ -121,8 +124,8 @@ export function RoomView() {
           )}
         </div>
 
-        <div className="card" style={{ minWidth: 250, flex: 1 }}>
-          <h3 style={{ marginTop: 0 }}>🛠️ 作業台 ({bench.length}/8)</h3>
+        <div className="card">
+          <h3>🛠️ 作業台 ({bench.length}/8)</h3>
           {bench.length === 0 && <div className="muted">棚に置いていない株はここに並ぶ (光がほぼ当たらない)</div>}
           <div className="row">
             {bench.map((pid) => {
@@ -139,7 +142,7 @@ export function RoomView() {
       </div>
 
       {shelves.length === 0 && (
-        <div className="card" style={{ marginTop: 12 }}>
+        <div className="card" style={{ marginTop: "0.85rem" }}>
           棚がありません。<button onClick={() => setView("shop")}>ショップで棚を買う</button>
         </div>
       )}

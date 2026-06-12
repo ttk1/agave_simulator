@@ -21,6 +21,7 @@ export function ShelfView() {
   const setLedCol = useGame((s) => s.setLedCol);
   const toggleLed = useGame((s) => s.toggleLed);
   const removeShelf = useGame((s) => s.removeShelf);
+  const benchFull = useGame((s) => s.bench.length >= 8);
 
   const shelf = shelves.find((sh) => sh.id === activeShelfId) ?? shelves[0];
   if (!shelf) {
@@ -37,7 +38,7 @@ export function ShelfView() {
 
   return (
     <div>
-      <div className="row" style={{ marginBottom: 8 }}>
+      <div className="row" style={{ marginBottom: "0.6rem" }}>
         <button onClick={() => setView("room")}>← 部屋</button>
         {shelves.map((sh) => (
           <button key={sh.id} className={sh.id === shelf.id ? "tab active" : "tab"} onClick={() => openShelf(sh.id)}>
@@ -52,7 +53,10 @@ export function ShelfView() {
 
       {moving && (
         <div className="picking-banner">
-          <span>↔️ {moving.name} の移動先スロットをクリック (他の棚タブへ切替も可)</span>
+          <span style={{ flex: 1 }}>↔️ {moving.name} の移動先スロットをクリック (他の棚タブへ切替も可)</span>
+          <button disabled={benchFull} onClick={() => movePlant(moving.id, "bench")}>
+            🛠️ 作業台へ置く
+          </button>
           <button onClick={() => startMove(null)}>キャンセル</button>
         </div>
       )}
@@ -76,7 +80,7 @@ export function ShelfView() {
           }}
         />
       </div>
-      <div className="muted" style={{ marginTop: 6 }}>
+      <div className="muted" style={{ marginTop: "0.45rem" }}>
         ドラッグで回転 / ホイールでズーム。空きスロットをクリックで種まき、株をクリックで詳細。床の色はその場所の光量。
       </div>
 
@@ -87,7 +91,7 @@ export function ShelfView() {
         .reverse()
         .map(({ lv, li }) => (
         <div className="led-row" key={li}>
-          <strong style={{ width: 70 }}>
+          <strong className="led-label">
             {li + 1}段目{li === shelf.levels.length - 1 ? " (上)" : li === 0 ? " (下)" : ""}
           </strong>
           {lv.led ? (

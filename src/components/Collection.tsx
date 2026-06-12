@@ -11,9 +11,12 @@ export function Collection() {
 
   return (
     <div>
-      <h2>📖 図鑑・実績</h2>
+      <div className="view-head">
+        <h2>📖 図鑑・実績</h2>
+        <span className="muted">育成株サイズまで育てた品種が登録される</span>
+      </div>
       <div className="card">
-        <div className="row" style={{ gap: 24 }}>
+        <div className="row" style={{ gap: "1.7rem" }}>
           <span>
             ⏳ プレイ日数: <strong>{totalDaysPlayed} 日</strong>
           </span>
@@ -33,7 +36,7 @@ export function Collection() {
               </div>
               <div className="muted">{e ? sp.latin : "育成株まで育てると登録される"}</div>
               {e && (
-                <div style={{ marginTop: 6, fontSize: 12 }}>
+                <div style={{ marginTop: "0.45rem", fontSize: "0.86rem" }}>
                   <div>育成: {e.grown} 株 ／ 販売: {e.sold} 株</div>
                   <div>最高査定: {e.bestPrice > 0 ? fmtMoney(e.bestPrice) : "—"}</div>
                   <div>最高個体: {qualityStars(e.bestQuality)}</div>
@@ -44,8 +47,8 @@ export function Collection() {
         })}
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>⚠️ データ</h3>
+      <div className="card" style={{ marginTop: "1.1rem" }}>
+        <h3>⚠️ データ</h3>
         <p className="muted">セーブデータはこのブラウザの localStorage に自動保存される。</p>
         <button
           className="danger"

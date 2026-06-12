@@ -72,7 +72,7 @@ export function PlantPanel() {
         {sp.latin} <span className={`badge ${sp.tier}`}>{TIER_LABEL[sp.tier]}</span>
       </div>
 
-      <div style={{ margin: "10px 0" }}>
+      <div style={{ margin: "0.7rem 0" }}>
         <PlantViewer plant={plant} />
       </div>
 
@@ -121,7 +121,7 @@ export function PlantPanel() {
       </div>
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>🧬 個体値 {plant.geneticsKnown ? qualityStars((g.compact + g.thick + g.spine) / 3) : ""}</h3>
+        <h3>🧬 個体値 {plant.geneticsKnown ? qualityStars((g.compact + g.thick + g.spine) / 3) : ""}</h3>
         {plant.geneticsKnown ? (
           <>
             <Bar name="短葉" value={g.compact} color="#37c978" />
@@ -137,7 +137,7 @@ export function PlantPanel() {
 
       {!dead && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>🛠️ 作業</h3>
+          <h3>🛠️ 作業</h3>
           <div className="row">
             <button onClick={() => waterPlant(plant.id)}>💧 水やり</button>
             <button onClick={() => feedLiquid(plant.id)} disabled={inventory.liquidFert <= 0}>
@@ -166,8 +166,8 @@ export function PlantPanel() {
           </div>
 
           {repotOpen && (
-            <div style={{ marginTop: 8, padding: 8, background: "#11161e", borderRadius: 8 }}>
-              <div className="row" style={{ marginBottom: 6 }}>
+            <div className="subpanel">
+              <div className="row" style={{ marginBottom: "0.45rem" }}>
                 <select value={repotPot} onChange={(e) => setRepotPot(Number(e.target.value) as PotSize)}>
                   {([1, 2, 3] as PotSize[]).map((s) => (
                     <option key={s} value={s}>
@@ -187,7 +187,7 @@ export function PlantPanel() {
                 <input type="checkbox" checked={repotFert} onChange={(e) => setRepotFert(e.target.checked)} />
                 元肥を入れる (在庫{inventory.baseFert})
               </label>
-              <div style={{ marginTop: 6 }}>
+              <div style={{ marginTop: "0.45rem" }}>
                 <button
                   className="primary"
                   onClick={() => {
@@ -198,7 +198,7 @@ export function PlantPanel() {
                   実行
                 </button>
               </div>
-              <div className="muted" style={{ marginTop: 4 }}>
+              <div className="muted" style={{ marginTop: "0.3rem" }}>
                 根腐れ・根詰まりが回復。数日成長が止まる
               </div>
             </div>
@@ -207,7 +207,7 @@ export function PlantPanel() {
       )}
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>💰 販売</h3>
+        <h3>💰 販売</h3>
         {price > 0 ? (
           <div className="row">
             <span style={{ flex: 1 }}>
@@ -221,7 +221,7 @@ export function PlantPanel() {
         ) : (
           <div className="muted">葉が 4 枚以上の育成株になると販売できる</div>
         )}
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: "0.6rem" }}>
           <button className="danger" onClick={() => discardPlant(plant.id)}>
             🗑️ 廃棄する
           </button>

@@ -29,10 +29,10 @@ export function DaySummary() {
             </div>
           ))
         )}
-        <div className="report-line" style={{ marginTop: 10 }}>
+        <div className="report-line" style={{ marginTop: "0.7rem" }}>
           ⚡ 電気代: <strong>{fmtMoney(report.electricity)}</strong>
         </div>
-        <div style={{ textAlign: "right", marginTop: 12 }}>
+        <div style={{ textAlign: "right", marginTop: "0.85rem" }}>
           <button className="primary" onClick={closeReport}>
             朝になった ☀️
           </button>

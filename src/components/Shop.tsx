@@ -18,8 +18,12 @@ export function Shop() {
 
   return (
     <div>
-      <h2>🛒 ショップ — 所持金 <span style={{ color: "var(--gold)" }}>{fmtMoney(money)}</span></h2>
-      <p className="muted">買い物はネット注文なので時間を消費しない。種・子株は即日到着。</p>
+      <div className="view-head">
+        <h2>
+          🛒 ショップ — 所持金 <span style={{ color: "var(--gold)" }}>{fmtMoney(money)}</span>
+        </h2>
+        <span className="muted">種・子株は注文すると即日到着する</span>
+      </div>
 
       <h3>🌰 種子・子株</h3>
       <div className="shop-grid">

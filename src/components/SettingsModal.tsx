@@ -15,14 +15,16 @@ export function SettingsModal() {
         <h2>⚙️ 設定</h2>
 
         <h3>🌱 成長速度</h3>
-        <p className="muted">
-          1日あたりの成長量の倍率。いつでも変更でき、変更後の日送りから反映される。
-        </p>
+        <p className="muted">1日あたりの成長量の倍率。いつでも変更でき、変更後の日送りから反映される。</p>
         {GROWTH_SPEED_OPTIONS.map((opt) => (
           <label
             className="opt"
             key={opt.value}
-            style={{ padding: "0.4rem 0.5rem", borderRadius: 8, background: settings.growthSpeed === opt.value ? "#102a40" : "transparent" }}
+            style={{
+              padding: "0.4rem 0.5rem",
+              borderRadius: "0.55rem",
+              background: settings.growthSpeed === opt.value ? "#102a40" : "transparent",
+            }}
           >
             <input
               type="radio"
@@ -41,11 +43,9 @@ export function SettingsModal() {
         <div className="report-line">
           🗓️ 現実の日付が変わると、ゲーム内も自動で同じ日数だけ進む (起動していなかった期間もまとめて経過)。
         </div>
-        <div className="report-line">
-          🌙 待ちきれないときは「次の日へ」ボタンでいつでも先に進められる。
-        </div>
+        <div className="report-line">🌙 待ちきれないときは「次の日へ」ボタンでいつでも先に進められる。</div>
 
-        <div style={{ textAlign: "right", marginTop: 12 }}>
+        <div style={{ textAlign: "right", marginTop: "0.85rem" }}>
           <button className="primary" onClick={() => setShowSettings(false)}>
             閉じる
           </button>
