@@ -24,6 +24,17 @@
   どの列に株を置くか (LED との距離) も自由。
 - セーブは **localStorage に自動保存** (サーバー無し)。
 
+## 公開 (GitHub Pages)
+
+main ブランチへ push すると GitHub Actions
+([.github/workflows/deploy.yml](.github/workflows/deploy.yml)) がビルドして
+GitHub Pages へ自動デプロイする。
+
+- 公開 URL: https://ttk1.github.io/agave_simulator/
+- 初回のみ、リポジトリの **Settings → Pages → Source を「GitHub Actions」** に
+  設定する必要がある。
+- Vite の `base` は相対パス (`"./"`) なのでサブパス配信でもそのまま動く。
+
 ## 技術スタック
 
 - Vite + React + TypeScript
