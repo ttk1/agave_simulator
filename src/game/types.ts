@@ -1,0 +1,160 @@
+// ===== ドメイン型定義 =====
+
+export type SoilType = "akadama" | "pumice" | "rich";
+export type PotSize = 1 | 2 | 3;
+export type LedPower = 1 | 2 | 3;
+export type ShelfKind = "small" | "large";
+export type VarieType = "margin" | "center";
+
+/** 遺伝子 (個体値)。すべて 0..1 */
+export interface Genetics {
+  /** 葉の短さ (高いほど短葉でコンパクト) */
+  compact: number;
+  /** 葉の厚み・幅 */
+  thick: number;
+  /** 棘の大きさ・ゴツさ */
+  spine: number;
+  /** 成長速度 */
+  growth: number;
+  /** 色味 -1(青白) .. +1(黄緑) */
+  hue: number;
+  /** 斑の強さ 0=ノーマル */
+  variegation: number;
+  /** 斑のタイプ */
+  vtype: VarieType;
+}
+
+/** 展開済みの葉 1 枚。出葉時の環境を焼き込む */
+export interface Leaf {
+  /** 相対長 */
+  len: number;
+  /** 相対幅 */
+  width: number;
+  /** 厚み */
+  thick: number;
+  /** 徒長度 0..1 (高いとひょろ長く垂れる) */
+  etiole: number;
+  /** 色ゆらぎ */
+  hueShift: number;
+  /** 出葉日 */
+  born: number;
+}
+
+export type PlantStage = "seed" | "seedling" | "plant" | "dead";
+
+export interface Plant {
+  id: string;
+  speciesId: string;
+  /** 個体名 例: 白鯨 #3 */
+  name: string;
+  genetics: Genetics;
+  /** 遺伝子が判明しているか (実生は育つまで不明) */
+  geneticsKnown: boolean;
+  stage: PlantStage;
+  sownDay: number;
+  leaves: Leaf[];
+  /** 次の葉までの成長ポイント */
+  growthProgress: number;
+  /** 株全体のサイズ係数 */
+  leafScale: number;
+  /** 土の水分 0..1 */
+  moisture: number;
+  /** 健康 0..100 */
+  health: number;
+  /** 根詰まり 0..1 */
+  rootBound: number;
+  /** 元肥の残り日数 */
+  baseFertDays: number;
+  /** 液肥の残り日数 */
+  liquidFertDays: number;
+  potSize: PotSize;
+  soil: SoilType;
+  /** 植え替えストレス残日数 */
+  stressDays: number;
+  /** 出葉用に追跡する光量の移動平均 */
+  lightAvg: number;
+  daysSinceWater: number;
+  /** 根腐れ進行 0..1 */
+  rot: number;
+  /** 害虫発生中か */
+  pest: boolean;
+}
+
+export interface Led {
+  power: LedPower;
+  /** 取り付け位置 (列) */
+  col: number;
+  on: boolean;
+}
+
+export interface ShelfLevel {
+  /** スロットに置かれた plant id (null=空) */
+  slots: (string | null)[];
+  led: Led | null;
+}
+
+export interface Shelf {
+  id: string;
+  kind: ShelfKind;
+  /** 部屋グリッド上の位置 */
+  x: number;
+  y: number;
+  levels: ShelfLevel[];
+  name: string;
+}
+
+export interface Inventory {
+  /** speciesId -> 種の数 */
+  seeds: Record<string, number>;
+  pots: Record<PotSize, number>;
+  soil: Record<SoilType, number>;
+  baseFert: number;
+  liquidFert: number;
+  leds: Record<LedPower, number>;
+  shelves: Record<ShelfKind, number>;
+}
+
+export interface Devices {
+  heater: boolean;
+  heaterOn: boolean;
+  circulator: boolean;
+  circulatorOn: boolean;
+}
+
+export interface CollectionEntry {
+  grown: number;
+  sold: number;
+  bestPrice: number;
+  bestQuality: number;
+}
+
+export interface DayReport {
+  day: number;
+  lines: string[];
+  electricity: number;
+  income: number;
+}
+
+export interface SpeciesDef {
+  id: string;
+  name: string;
+  /** 学名・通称表示 */
+  latin: string;
+  desc: string;
+  seedPrice: number;
+  pupPrice: number;
+  basePrice: number;
+  /** 遺伝子レンジ [min,max] */
+  range: {
+    compact: [number, number];
+    thick: [number, number];
+    spine: [number, number];
+    growth: [number, number];
+    hue: [number, number];
+  };
+  /** 斑入り出現率 */
+  varieChance: number;
+  /** 発芽日数 */
+  germDays: number;
+  tier: "beginner" | "mid" | "premium" | "rare";
+}
