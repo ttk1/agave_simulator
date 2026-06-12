@@ -1,4 +1,13 @@
-import { AMBIENT_LIGHT, LED_FALLOFF, LED_SPEC } from "./constants";
+import {
+  AIRCON_COST_PER_DEG,
+  AIRCON_MAX_TEMP,
+  AMBIENT_LIGHT,
+  DEVICE_SPEC,
+  LED_FALLOFF,
+  LED_HEAT,
+  LED_HEAT_CAP,
+  LED_SPEC,
+} from "./constants";
 import type { Devices, Shelf } from "./types";
 
 /** 1年 = 360日。day 1 = 5月1日相当 (発芽適温の春スタート) */
@@ -42,11 +51,36 @@ export function outsideTemp(day: number): number {
   return t + Math.sin(day * 1.7) * 1.5; // 日々のゆらぎ
 }
 
-/** 室温 (°C)。断熱でマイルドに。ヒーターで下限を保証 */
-export function roomTemp(day: number, devices: Devices): number {
-  let t = outsideTemp(day) * 0.65 + 7.5;
+/** 点灯中の LED による室温上昇 (°C) */
+export function ledHeat(shelves: Shelf[]): number {
+  let h = 0;
+  for (const sh of shelves) {
+    for (const lv of sh.levels) {
+      if (lv.led && lv.led.on) h += LED_HEAT[lv.led.power];
+    }
+  }
+  return Math.min(LED_HEAT_CAP, h);
+}
+
+/** エアコンで冷やす前の室温 (LED 発熱・ヒーター込み) */
+function roomTempRaw(day: number, devices: Devices, shelves: Shelf[]): number {
+  let t = outsideTemp(day) * 0.65 + 7.5 + ledHeat(shelves);
   if (devices.heater && devices.heaterOn) t = Math.max(t, 20);
+  return t;
+}
+
+/** 室温 (°C)。断熱でマイルドに。ヒーターで下限、エアコンで上限を保証 */
+export function roomTemp(day: number, devices: Devices, shelves: Shelf[]): number {
+  let t = roomTempRaw(day, devices, shelves);
+  if (devices.aircon && devices.airconOn) t = Math.min(t, AIRCON_MAX_TEMP);
   return Math.round(t * 10) / 10;
+}
+
+/** エアコンの 1 日の電気代。冷やした度数に比例して増える */
+export function airconCost(day: number, devices: Devices, shelves: Shelf[]): number {
+  if (!devices.aircon || !devices.airconOn) return 0;
+  const over = Math.max(0, roomTempRaw(day, devices, shelves) - AIRCON_MAX_TEMP);
+  return Math.round(DEVICE_SPEC.aircon.elecPerDay + AIRCON_COST_PER_DEG * over);
 }
 
 /** 室内湿度 0..1。夏に高い */

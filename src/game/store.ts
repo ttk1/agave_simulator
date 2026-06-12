@@ -97,7 +97,7 @@ interface GameStore {
   uninstallLed: (shelfId: string, level: number) => void;
   setLedCol: (shelfId: string, level: number, col: number) => void;
   toggleLed: (shelfId: string, level: number) => void;
-  toggleDevice: (d: "heaterOn" | "circulatorOn") => void;
+  toggleDevice: (d: "heaterOn" | "circulatorOn" | "airconOn") => void;
   buySeed: (speciesId: string) => void;
   buyPup: (speciesId: string) => void;
   buyPot: (size: PotSize) => void;
@@ -105,7 +105,7 @@ interface GameStore {
   buyFert: (kind: "base" | "liquid") => void;
   buyLed: (power: LedPower) => void;
   buyShelf: (kind: ShelfKind) => void;
-  buyDevice: (d: "heater" | "circulator") => void;
+  buyDevice: (d: "heater" | "circulator" | "aircon") => void;
   resetGame: () => void;
 }
 
@@ -147,7 +147,7 @@ function initialGame() {
     bench: [] as string[],
     shelves: initialShelves(),
     inventory: initialInventory(),
-    devices: { heater: false, heaterOn: false, circulator: false, circulatorOn: false },
+    devices: { heater: false, heaterOn: false, circulator: false, circulatorOn: false, aircon: false, airconOn: false },
     market: 1.0,
     report: null,
     collection: {} as Record<string, CollectionEntry>,

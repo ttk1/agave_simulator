@@ -1,5 +1,5 @@
 import { DEVICE_SPEC, LED_SPEC, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "./constants";
-import { roomHumidity, roomTemp, slotLight } from "./environment";
+import { airconCost, roomHumidity, roomTemp, slotLight } from "./environment";
 import { growLeaf } from "./genetics";
 import type { Devices, Plant, Shelf } from "./types";
 
@@ -33,7 +33,7 @@ export function tickDay(
   devices: Devices,
 ): TickResult {
   const lines: string[] = [];
-  const temp = roomTemp(day, devices);
+  const temp = roomTemp(day, devices, shelves);
   const humidity = roomHumidity(day);
   const airflow = devices.circulator && devices.circulatorOn;
   const placement = buildPlacement(shelves);
@@ -80,9 +80,9 @@ export function tickDay(
       lines.push(`🥶 ${p.name} が低温で傷んでいる (${temp}°C)`);
     } else if (temp < 8) {
       p.health = clamp(p.health - 4, 0, 100);
-    } else if (temp > 36) {
-      p.health = clamp(p.health - 5, 0, 100);
-      lines.push(`🥵 ${p.name} が高温でぐったりしている`);
+    } else if (temp > 34) {
+      p.health = clamp(p.health - 4, 0, 100);
+      lines.push(`🥵 ${p.name} が高温でぐったりしている (${temp}°C)`);
     }
 
     // 極端な乾燥 (苗は弱い)
@@ -179,6 +179,7 @@ export function tickDay(
   }
   if (devices.heater && devices.heaterOn) electricity += DEVICE_SPEC.heater.elecPerDay;
   if (devices.circulator && devices.circulatorOn) electricity += DEVICE_SPEC.circulator.elecPerDay;
+  electricity += airconCost(day, devices, shelves);
 
   return { lines, electricity };
 }

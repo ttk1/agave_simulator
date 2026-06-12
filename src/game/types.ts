@@ -119,6 +119,8 @@ export interface Devices {
   heaterOn: boolean;
   circulator: boolean;
   circulatorOn: boolean;
+  aircon: boolean;
+  airconOn: boolean;
 }
 
 export interface CollectionEntry {

@@ -60,7 +60,21 @@ export const AMBIENT_LIGHT = 0.08;
 export const DEVICE_SPEC = {
   heater: { name: "パネルヒーター", price: 9000, elecPerDay: 90 },
   circulator: { name: "サーキュレーター", price: 4500, elecPerDay: 15 },
+  /** elecPerDay は待機 (送風) コスト。冷却 1°C ごとに加算される */
+  aircon: { name: "エアコン (冷房)", price: 38000, elecPerDay: 60 },
 } as const;
+
+/** 冷房時の電気代: 1°C 冷やすごとの加算額 */
+export const AIRCON_COST_PER_DEG = 35;
+
+/** エアコン稼働時の室温上限 */
+export const AIRCON_MAX_TEMP = 27;
+
+/** 点灯中の LED 1 台が室温を上げる量 (°C) */
+export const LED_HEAT: Record<LedPower, number> = { 1: 0.4, 2: 0.7, 3: 1.0 };
+
+/** LED 発熱による室温上昇の上限 (°C) */
+export const LED_HEAT_CAP = 8;
 
 // ===== 資材 =====
 

@@ -104,12 +104,20 @@ export function RoomView() {
             <div className="muted">🔥 ヒーター未所持 (冬の保温に)</div>
           )}
           {devices.circulator ? (
-            <div className="row">
+            <div className="row" style={{ marginBottom: 6 }}>
               <span style={{ flex: 1 }}>🌀 {DEVICE_SPEC.circulator.name}</span>
               <button onClick={() => toggleDevice("circulatorOn")}>{devices.circulatorOn ? "ON" : "OFF"}</button>
             </div>
           ) : (
             <div className="muted">🌀 サーキュレーター未所持 (蒸れ・害虫対策)</div>
+          )}
+          {devices.aircon ? (
+            <div className="row">
+              <span style={{ flex: 1 }}>❄️ {DEVICE_SPEC.aircon.name}</span>
+              <button onClick={() => toggleDevice("airconOn")}>{devices.airconOn ? "ON" : "OFF"}</button>
+            </div>
+          ) : (
+            <div className="muted">❄️ エアコン未所持 (夏の高温・LED発熱対策)</div>
           )}
         </div>
 

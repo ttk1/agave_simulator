@@ -83,7 +83,7 @@ export function PlantPanel() {
               ? "💀 枯死"
               : plant.stage === "seed"
                 ? `🌰 種 (あと${Math.max(0, sp.germDays - (day - plant.sownDay))}日前後で発芽${
-                    roomTemp(day, devices) < 17 ? "・室温17°C以上が必要!" : plant.moisture < 0.3 ? "・水分不足!" : ""
+                    roomTemp(day, devices, shelves) < 17 ? "・室温17°C以上が必要!" : plant.moisture < 0.3 ? "・水分不足!" : ""
                   })`
                 : plant.stage === "seedling"
                   ? "🌱 育苗中"

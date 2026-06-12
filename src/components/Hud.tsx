@@ -1,6 +1,6 @@
 import { DAY_MINUTES } from "../game/constants";
 import { fmtMoney } from "../game/economy";
-import { dateLabel, roomHumidity, roomTemp, SEASON_LABEL, seasonOf } from "../game/environment";
+import { dateLabel, ledHeat, roomHumidity, roomTemp, SEASON_LABEL, seasonOf } from "../game/environment";
 import { useGame } from "../game/store";
 
 export function Hud() {
@@ -9,12 +9,14 @@ export function Hud() {
   const timeLeft = useGame((s) => s.timeLeft);
   const market = useGame((s) => s.market);
   const devices = useGame((s) => s.devices);
+  const shelves = useGame((s) => s.shelves);
   const view = useGame((s) => s.view);
   const setView = useGame((s) => s.setView);
   const nextDay = useGame((s) => s.nextDay);
   const setShowHelp = useGame((s) => s.setShowHelp);
 
-  const temp = roomTemp(day, devices);
+  const temp = roomTemp(day, devices, shelves);
+  const heat = ledHeat(shelves);
   const hum = Math.round(roomHumidity(day) * 100);
 
   return (
@@ -31,9 +33,11 @@ export function Hud() {
         <span className="value money">{fmtMoney(money)}</span>
       </div>
       <div className="stat">
-        <span className="label">室温 / 湿度</span>
+        <span className="label">
+          室温 / 湿度{heat > 0 ? ` (LED発熱 +${heat.toFixed(1)}°C)` : ""}
+        </span>
         <span className="value">
-          {temp}°C / {hum}%
+          {temp}°C{devices.aircon && devices.airconOn ? " ❄️" : ""} / {hum}%
         </span>
       </div>
       <div className="stat">

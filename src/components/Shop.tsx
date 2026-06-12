@@ -139,6 +139,18 @@ export function Shop() {
           </div>
         </div>
         <div className="shop-item">
+          <div className="title">{DEVICE_SPEC.aircon.name}</div>
+          <div className="muted">
+            室温を 27°C 以下に保つ。LED の発熱対策に。電気代 ¥{DEVICE_SPEC.aircon.elecPerDay}/日 + 冷却量に応じて加算
+          </div>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <span className="price">{fmtMoney(DEVICE_SPEC.aircon.price)}</span>
+            <button disabled={devices.aircon || money < DEVICE_SPEC.aircon.price} onClick={() => buyDevice("aircon")}>
+              {devices.aircon ? "所持済" : "買う"}
+            </button>
+          </div>
+        </div>
+        <div className="shop-item">
           <div className="title">{DEVICE_SPEC.circulator.name}</div>
           <div className="muted">蒸れ・根腐れ・害虫を抑える。電気代 ¥{DEVICE_SPEC.circulator.elecPerDay}/日</div>
           <div className="row" style={{ justifyContent: "space-between" }}>
