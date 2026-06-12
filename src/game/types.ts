@@ -12,7 +12,7 @@ export interface Genetics {
   compact: number;
   /** 葉の厚み・幅 */
   thick: number;
-  /** 棘の大きさ・ゴツさ */
+  /** 鋸歯 (棘) の強さ・大きさ */
   spine: number;
   /** 成長速度 */
   growth: number;

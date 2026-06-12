@@ -126,7 +126,7 @@ export function PlantPanel() {
           <>
             <Bar name="短葉" value={g.compact} color="#37c978" />
             <Bar name="葉の厚み" value={g.thick} color="#37c978" />
-            <Bar name="棘のゴツさ" value={g.spine} color="#37c978" />
+            <Bar name="鋸歯の強さ" value={g.spine} color="#37c978" />
             <Bar name="成長速度" value={g.growth} color="#3da9fc" />
             {g.variegation > 0 && <Bar name="斑の強さ" value={g.variegation} color="#e8c252" />}
           </>
