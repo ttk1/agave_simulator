@@ -1,6 +1,7 @@
 import { OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import * as THREE from "three";
 import { ROOM_COLS, ROOM_ROWS, WINDOW_X } from "../game/constants";
 import { sunStrength } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
@@ -11,6 +12,32 @@ const WALL_H = 5.4;
 
 function cellPos(x: number, y: number): [number, number] {
   return [(x - (ROOM_COLS - 1) / 2) * CELL, (y - (ROOM_ROWS - 1) / 2) * CELL];
+}
+
+/** 部屋のマス目どおりの長方形グリッド (gridHelper は正方形しか作れない) */
+function RoomGrid() {
+  const geometry = useMemo(() => {
+    const w = ROOM_COLS * CELL;
+    const d = ROOM_ROWS * CELL;
+    const pts: number[] = [];
+    for (let i = 0; i <= ROOM_COLS; i++) {
+      const x = -w / 2 + i * CELL;
+      pts.push(x, 0, -d / 2, x, 0, d / 2);
+    }
+    for (let j = 0; j <= ROOM_ROWS; j++) {
+      const z = -d / 2 + j * CELL;
+      pts.push(-w / 2, 0, z, w / 2, 0, z);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    return g;
+  }, []);
+
+  return (
+    <lineSegments geometry={geometry} position={[0, 0.005, 0]}>
+      <lineBasicMaterial color="#3a352d" />
+    </lineSegments>
+  );
 }
 
 function ClickableShelf({
@@ -97,7 +124,7 @@ export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
           <planeGeometry args={[roomW + 0.4, roomD + 0.4]} />
           <meshStandardMaterial color="#2b2620" roughness={0.92} />
         </mesh>
-        <gridHelper args={[Math.max(roomW, roomD) + 0.4, Math.max(ROOM_COLS, ROOM_ROWS), "#3a352d", "#3a352d"]} position={[0, 0.0, 0]} />
+        <RoomGrid />
 
         {/* 北壁 (窓付き) */}
         <mesh position={[0, WALL_H / 2, wallZ - 0.1]}>
