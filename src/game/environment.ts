@@ -101,15 +101,42 @@ export function sunStrength(day: number): number {
 }
 
 /**
+ * 棚の向き (rot) による窓光の入りやすさ。窓は北 (y=0 側) にある。
+ * メタルラックは背面も開放なので、正面・背面が窓を向くケースは同等によく光が入る。
+ * 横向き (1/3) のときだけ、棚に対して窓が斜めから当たるぶん僅かに弱まる。
+ */
+function facingFactor(rot: number): number {
+  const r = ((rot % 4) + 4) % 4;
+  // 0 = 正面が窓 / 2 = 背面が窓 → どちらも開放面が窓に正対するため最大
+  return r === 1 || r === 3 ? 0.85 : 1;
+}
+
+/**
  * 部屋の窓 (北壁 y=0 側、WINDOW_X の列) からの自然光ボーナス。
- * 窓に近い棚ほど強く、棚板の影にならない最上段がよく当たる。
+ * 窓に近い棚ほど強く、棚板の影にならない最上段がよく当たり、
+ * 棚の正面が窓を向いているほど差し込む。
  */
 export function windowBonus(shelf: Shelf, level: number, day: number): number {
+  // 横方向のずれは強めに減衰させる (窓は WINDOW_X の列にしか無いため、
+  // 真下から外れるほど光は届きにくい)。windowSide の表示判定とも整合する。
   const dx = shelf.x < WINDOW_X[0] ? WINDOW_X[0] - shelf.x : shelf.x > WINDOW_X[1] ? shelf.x - WINDOW_X[1] : 0;
-  const dist = shelf.y + dx * 0.7;
+  const dist = shelf.y + dx * 1.6;
   const falloff = 1 / (1 + dist * 1.1);
   const levelF = level === shelf.levels.length - 1 ? 1 : 0.4;
-  return sunStrength(day) * falloff * levelF;
+  return sunStrength(day) * falloff * levelF * facingFactor(shelf.rot ?? 0);
+}
+
+/**
+ * その棚が窓 (北壁) に面しているか。面している場合のみ near (とても近いか) を返す。
+ * 窓は北壁 (y=0 側) の WINDOW_X の列にあるので、その列の真下に並ぶ棚だけが対象。
+ * 横方向にずれた棚や、奥まった棚 (y が大きい) は窓に面さない = null。
+ * ラック画面 (棚は北を奥にして固定描画) で窓を出すかの判定に使う。
+ */
+export function windowSide(shelf: Shelf): { near: boolean } | null {
+  const inWindowCols = shelf.x >= WINDOW_X[0] && shelf.x <= WINDOW_X[1];
+  if (!inWindowCols) return null; // 窓の列から横にずれている棚には窓は見えない
+  if (shelf.y > 1) return null; // 窓から遠い (奥まった) 棚も対象外
+  return { near: shelf.y === 0 };
 }
 
 /** 棚のあるスロットの光量を計算 (0..~1.25) */

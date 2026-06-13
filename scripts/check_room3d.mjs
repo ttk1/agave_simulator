@@ -32,7 +32,7 @@ await page.evaluate(() => {
     lightAvg: 0.5, daysSinceWater: 1, rot: 0, pest: false,
   });
   const mkShelf = (id, x, y, pid) => ({
-    id, kind: "small", x, y, name: id,
+    id, kind: "small", x, y, rot: 2, name: id, // 正面を窓に向けて採光条件を揃える
     levels: [
       { slots: [null, null, null], led: null },
       { slots: [pid, null, null], led: null }, // 最上段に配置 (窓光が一番当たる)

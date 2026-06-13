@@ -76,6 +76,7 @@ interface GameStore {
   activeShelfId: string | null;
   selectedPlantId: string | null;
   movingPlantId: string | null;
+  movingShelfId: string | null;
   sowTarget: SlotRef | "bench" | null;
   placingShelf: ShelfKind | null;
   showReport: boolean;
@@ -112,6 +113,10 @@ interface GameStore {
   movePlant: (id: string, target: SlotRef | "bench") => void;
   placeShelf: (kind: ShelfKind, x: number, y: number) => void;
   removeShelf: (shelfId: string) => void;
+  /** 棚の移動モードの開始/解除 */
+  startMoveShelf: (shelfId: string | null) => void;
+  moveShelf: (shelfId: string, x: number, y: number) => void;
+  rotateShelf: (shelfId: string) => void;
   installLed: (shelfId: string, level: number, power: LedPower) => void;
   uninstallLed: (shelfId: string, level: number) => void;
   setLedCol: (shelfId: string, level: number, col: number) => void;
@@ -136,6 +141,7 @@ function initialShelves(): Shelf[] {
       kind: "small",
       x: 2,
       y: 1,
+      rot: 0,
       name: "ラック 1",
       levels: Array.from({ length: spec.levels }, (_, i) => ({
         slots: Array.from({ length: spec.cols }, () => null),
@@ -239,6 +245,7 @@ export const useGame = create<GameStore>()(
         activeShelfId: null,
         selectedPlantId: null,
         movingPlantId: null,
+        movingShelfId: null,
         sowTarget: null,
         placingShelf: null,
         showReport: false,
@@ -246,7 +253,7 @@ export const useGame = create<GameStore>()(
         showSettings: false,
         toast: null,
 
-        setView: (v) => set({ view: v, movingPlantId: null, placingShelf: null }),
+        setView: (v) => set({ view: v, movingPlantId: null, movingShelfId: null, placingShelf: null }),
         openShelf: (id) => set({ view: "shelf", activeShelfId: id, selectedPlantId: null }),
         selectPlant: (id) => set({ selectedPlantId: id }),
         startMove: (plantId) => set({ movingPlantId: plantId }),
@@ -501,6 +508,7 @@ export const useGame = create<GameStore>()(
             kind,
             x,
             y,
+            rot: 0,
             name: `ラック ${s.shelves.length + 1}`,
             levels: Array.from({ length: spec.levels }, () => ({
               slots: Array.from({ length: spec.cols }, () => null),
@@ -537,6 +545,29 @@ export const useGame = create<GameStore>()(
             activeShelfId: null,
             toast: "棚を撤去した (LEDは回収)",
           });
+        },
+
+        startMoveShelf: (shelfId) => set({ movingShelfId: shelfId, placingShelf: null }),
+
+        moveShelf: (shelfId, x, y) => {
+          const s = get();
+          if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
+          if (s.shelves.some((sh) => sh.id !== shelfId && sh.x === x && sh.y === y)) {
+            return set({ toast: "そこには既に棚がある" });
+          }
+          const shelf = s.shelves.find((sh) => sh.id === shelfId);
+          if (!shelf) return;
+          set({
+            shelves: s.shelves.map((sh) => (sh.id !== shelfId ? sh : { ...sh, x, y })),
+            movingShelfId: null,
+            toast: `↔️ ${shelf.name} を移動した`,
+          });
+        },
+
+        rotateShelf: (shelfId) => {
+          set((s) => ({
+            shelves: s.shelves.map((sh) => (sh.id !== shelfId ? sh : { ...sh, rot: ((sh.rot ?? 0) + 1) % 4 })),
+          }));
         },
 
         installLed: (shelfId, level, power) => {
@@ -688,7 +719,18 @@ export const useGame = create<GameStore>()(
         resetGame: () => {
           // 設定 (成長速度) はリセットしても引き継ぐ
           const settings = get().settings;
-          set({ ...initialGame(), settings, view: "room", activeShelfId: null, selectedPlantId: null, showHelp: true, showReport: false });
+          set({
+            ...initialGame(),
+            settings,
+            view: "room",
+            activeShelfId: null,
+            selectedPlantId: null,
+            movingPlantId: null,
+            movingShelfId: null,
+            placingShelf: null,
+            showHelp: true,
+            showReport: false,
+          });
         },
       };
     },

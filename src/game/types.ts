@@ -99,6 +99,8 @@ export interface Shelf {
   /** 部屋グリッド上の位置 */
   x: number;
   y: number;
+  /** 向き (90° 単位の回転回数 0..3)。0 = 正面が南 (部屋の手前) 向き */
+  rot?: number;
   levels: ShelfLevel[];
   name: string;
 }

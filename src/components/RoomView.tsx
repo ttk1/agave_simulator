@@ -4,9 +4,14 @@ import { useGame } from "../game/store";
 import type { Shelf } from "../game/types";
 import { RoomScene } from "../three/RoomScene";
 
+/** 棚の正面が向いている方角 (rot 0 = 南/手前) */
+const ROT_ARROW = ["↓", "←", "↑", "→"];
+
 function ShelfCard({ shelf }: { shelf: Shelf }) {
   const openShelf = useGame((s) => s.openShelf);
   const plants = useGame((s) => s.plants);
+  const rotateShelf = useGame((s) => s.rotateShelf);
+  const startMoveShelf = useGame((s) => s.startMoveShelf);
   const count = shelf.levels.reduce((a, lv) => a + lv.slots.filter(Boolean).length, 0);
   const leds = shelf.levels.filter((lv) => lv.led).length;
   const alerts = shelf.levels
@@ -22,6 +27,18 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
       <div className="count">
         🪴 {count} ／ 💡 {leds}
         {alerts > 0 && <span style={{ color: "var(--danger)" }}> ⚠️{alerts}</span>}
+      </div>
+      <div className="row" style={{ gap: "0.25rem" }} onClick={(e) => e.stopPropagation()}>
+        <button className="mini" title="移動" onClick={() => startMoveShelf(shelf.id)}>
+          ✥ 移動
+        </button>
+        <button
+          className="mini"
+          title={`90°回転。正面の向き ${ROT_ARROW[shelf.rot ?? 0]}`}
+          onClick={() => rotateShelf(shelf.id)}
+        >
+          ↻ {ROT_ARROW[shelf.rot ?? 0]}
+        </button>
       </div>
     </div>
   );
@@ -41,7 +58,11 @@ export function RoomView() {
   const setView = useGame((s) => s.setView);
   const openShelf = useGame((s) => s.openShelf);
   const day = useGame((s) => s.day);
+  const movingShelfId = useGame((s) => s.movingShelfId);
+  const startMoveShelf = useGame((s) => s.startMoveShelf);
+  const moveShelf = useGame((s) => s.moveShelf);
   const [mode3d, setMode3d] = useState(false);
+  const movingShelf = movingShelfId ? shelves.find((sh) => sh.id === movingShelfId) : null;
 
   const shelfAt = (x: number, y: number) => shelves.find((sh) => sh.x === x && sh.y === y);
 
@@ -67,6 +88,12 @@ export function RoomView() {
           <button onClick={() => setPlacingShelf(null)}>キャンセル</button>
         </div>
       )}
+      {movingShelf && (
+        <div className="picking-banner">
+          <span>✥ {movingShelf.name} の移動先のマスをクリック</span>
+          <button onClick={() => startMoveShelf(null)}>キャンセル</button>
+        </div>
+      )}
 
       {mode3d ? (
         <div className="shelf-canvas">
@@ -86,13 +113,14 @@ export function RoomView() {
             {Array.from({ length: ROOM_ROWS }).map((_, y) =>
               Array.from({ length: ROOM_COLS }).map((_, x) => {
                 const shelf = shelfAt(x, y);
-                const placeable = !!placingShelf && !shelf;
+                const placeable = (!!placingShelf || !!movingShelfId) && !shelf;
                 return (
                   <div
                     key={`${x}-${y}`}
                     className={`room-cell${placeable ? " placeable" : ""}`}
                     onClick={() => {
-                      if (placeable && placingShelf) placeShelf(placingShelf, x, y);
+                      if (!shelf && placingShelf) placeShelf(placingShelf, x, y);
+                      else if (!shelf && movingShelfId) moveShelf(movingShelfId, x, y);
                     }}
                   >
                     {shelf ? <ShelfCard shelf={shelf} /> : placeable ? <span className="muted">＋</span> : null}

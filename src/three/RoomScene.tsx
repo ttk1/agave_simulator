@@ -69,12 +69,14 @@ function ClickableShelf({
       }}
       onPointerOut={() => setHovered(false)}
     >
-      {/* クリック判定用の透明ボックス (フレームが細いので) */}
-      <mesh position={[0, h / 2, 0]}>
-        <boxGeometry args={[w, h, 1.6]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
-      <ShelfModel shelf={shelf} plants={plants} day={day} />
+      {/* 向き (90°単位)。クリック判定用の透明ボックスごと回す */}
+      <group rotation={[0, (-(shelf.rot ?? 0) * Math.PI) / 2, 0]}>
+        <mesh position={[0, h / 2, 0]}>
+          <boxGeometry args={[w, h, 1.6]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <ShelfModel shelf={shelf} plants={plants} day={day} />
+      </group>
       {/* ホバー時のハイライトリング */}
       {hovered && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>

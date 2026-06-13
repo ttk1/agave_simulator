@@ -196,6 +196,12 @@ button.danger {
   color: #ffb4b2;
 }
 
+button.mini {
+  font-size: 0.72rem;
+  padding: 0.12em 0.5em;
+  border-radius: 0.4rem;
+}
+
 /* 選択状態を持つボタン (タブ・選択肢) */
 button.tab.active {
   background: #263244;
