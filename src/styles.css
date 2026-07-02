@@ -368,6 +368,18 @@ h3 {
   filter: grayscale(1) opacity(0.5);
 }
 
+/* デバッグモード有効時の HUD バッジ */
+.debug-chip {
+  background: #402a10;
+  border: 1px solid #a8742e;
+  color: #f0b45a;
+  border-radius: 0.45rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* 飾り家具のカード (棚カードの暖色バリアント) */
 .shelf-card.furn {
   border-color: #6e5a45;

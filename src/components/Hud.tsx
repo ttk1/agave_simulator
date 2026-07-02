@@ -1,9 +1,11 @@
+import { isLocalEnv } from "../game/debug";
 import { fmtMoney } from "../game/economy";
 import { dateLabel, ledHeat, roomHumidity, roomTemp, SEASON_LABEL, seasonOf } from "../game/environment";
 import { useGame } from "../game/store";
 
 export function Hud() {
   const day = useGame((s) => s.day);
+  const debug = useGame((s) => s.settings.debug);
   const money = useGame((s) => s.money);
   const market = useGame((s) => s.market);
   const devices = useGame((s) => s.devices);
@@ -21,6 +23,11 @@ export function Hud() {
   return (
     <div className="hud">
       <span className="logo">🪴 AGAVE LIFE</span>
+      {debug && isLocalEnv() && (
+        <span className="debug-chip" title="デバッグモード有効 (設定 ⚙️ で解除)">
+          🛠 DEBUG
+        </span>
+      )}
       <div className="stat">
         <span className="label">日付</span>
         <span className="value">

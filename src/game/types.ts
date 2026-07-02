@@ -163,6 +163,8 @@ export interface DayReport {
 export interface Settings {
   /** 成長速度の倍率 */
   growthSpeed: number;
+  /** デバッグモード (動作確認用。ローカル起動時のみ設定に出る) */
+  debug?: boolean;
 }
 
 export interface SpeciesDef {

@@ -152,6 +152,10 @@ interface GameStore {
   buyShelf: (kind: ShelfKind) => void;
   buyDevice: (d: "heater" | "circulator" | "aircon") => void;
   resetGame: () => void;
+  // デバッグ (ローカル起動時のみ設定 UI から使える)
+  setDebugMode: (b: boolean) => void;
+  debugAddMoney: () => void;
+  debugAddItems: () => void;
 }
 
 function initialShelves(): Shelf[] {
@@ -846,6 +850,41 @@ export const useGame = create<GameStore>()(
                 ? `${DEVICE_SPEC[d].name} を購入した (部屋画面で置き場所を決めよう)`
                 : `${DEVICE_SPEC[d].name} を購入した (稼働中)`,
           }));
+        },
+
+        // ===== デバッグ (SettingsModal がローカル起動時のみ UI を出す) =====
+
+        setDebugMode: (b) => set((s) => ({ settings: { ...s.settings, debug: b } })),
+
+        debugAddMoney: () => set((s) => ({ money: s.money + 1_000_000, toast: "🛠 ¥1,000,000 を追加した (デバッグ)" })),
+
+        debugAddItems: () => {
+          set((s) => {
+            const seeds = { ...s.inventory.seeds };
+            for (const id of Object.keys(SPECIES_MAP)) seeds[id] = (seeds[id] ?? 0) + 10;
+            const furniture = { ...s.inventory.furniture };
+            for (const k of Object.keys(FURNITURE_SPEC) as (keyof typeof FURNITURE_SPEC)[]) {
+              furniture[k] = (furniture[k] ?? 0) + 5;
+            }
+            return {
+              inventory: {
+                ...s.inventory,
+                seeds,
+                pots: { 1: s.inventory.pots[1] + 10, 2: s.inventory.pots[2] + 10, 3: s.inventory.pots[3] + 10 },
+                soil: {
+                  akadama: s.inventory.soil.akadama + 10,
+                  pumice: s.inventory.soil.pumice + 10,
+                  rich: s.inventory.soil.rich + 10,
+                },
+                baseFert: s.inventory.baseFert + 10,
+                liquidFert: s.inventory.liquidFert + 10,
+                leds: { 1: s.inventory.leds[1] + 10, 2: s.inventory.leds[2] + 10, 3: s.inventory.leds[3] + 10 },
+                shelves: { small: s.inventory.shelves.small + 5, large: s.inventory.shelves.large + 5 },
+                furniture,
+              },
+              toast: "🛠 全アイテムを追加した (デバッグ)",
+            };
+          });
         },
 
         resetGame: () => {

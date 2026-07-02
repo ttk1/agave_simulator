@@ -1,4 +1,5 @@
 import { GROWTH_SPEED_OPTIONS } from "../game/constants";
+import { isLocalEnv } from "../game/debug";
 import { useGame } from "../game/store";
 
 export function SettingsModal() {
@@ -6,6 +7,9 @@ export function SettingsModal() {
   const setShowSettings = useGame((s) => s.setShowSettings);
   const settings = useGame((s) => s.settings);
   const setGrowthSpeed = useGame((s) => s.setGrowthSpeed);
+  const setDebugMode = useGame((s) => s.setDebugMode);
+  const debugAddMoney = useGame((s) => s.debugAddMoney);
+  const debugAddItems = useGame((s) => s.debugAddItems);
 
   if (!showSettings) return null;
 
@@ -48,6 +52,30 @@ export function SettingsModal() {
           🗓️ 現実の日付が変わると、ゲーム内も自動で同じ日数だけ進む (起動していなかった期間もまとめて経過)。
         </div>
         <div className="report-line">🌙 待ちきれないときは「次の日へ」ボタンでいつでも先に進められる。</div>
+
+        {isLocalEnv() && (
+          <>
+            <h3>🛠 デバッグモード</h3>
+            <p className="muted">
+              動作確認用。ローカルで立てているときだけこの設定が表示される (公開ページには出ない)。
+            </p>
+            <label className="opt" style={{ padding: "0.4rem 0.5rem" }}>
+              <input
+                type="checkbox"
+                checked={!!settings.debug}
+                onChange={(e) => setDebugMode(e.target.checked)}
+              />
+              <strong>デバッグモードを有効にする</strong>
+              <span className="muted">資金・アイテムを好きなだけ追加できる</span>
+            </label>
+            {settings.debug && (
+              <div className="row" style={{ marginTop: "0.45rem", gap: "0.45rem" }}>
+                <button onClick={debugAddMoney}>💰 +¥1,000,000</button>
+                <button onClick={debugAddItems}>📦 全アイテム追加 (種・鉢・土・肥料・LED・棚・家具)</button>
+              </div>
+            )}
+          </>
+        )}
 
         <div style={{ textAlign: "right", marginTop: "0.85rem" }}>
           <button className="primary" onClick={() => setShowSettings(false)}>
