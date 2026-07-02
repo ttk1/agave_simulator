@@ -1,4 +1,5 @@
 import { LED_SPEC, SHELF_SPEC } from "../game/constants";
+import { airflowAt } from "../game/environment";
 import { useGame } from "../game/store";
 import type { LedPower } from "../game/types";
 import { ShelfScene } from "../three/ShelfScene";
@@ -24,6 +25,7 @@ export function ShelfView() {
   const benchFull = useGame((s) => s.bench.length >= 8);
   const growthSpeed = useGame((s) => s.settings.growthSpeed);
   const day = useGame((s) => s.day);
+  const devices = useGame((s) => s.devices);
 
   const shelf = shelves.find((sh) => sh.id === activeShelfId) ?? shelves[0];
   if (!shelf) {
@@ -85,6 +87,14 @@ export function ShelfView() {
       </div>
       <div className="muted" style={{ marginTop: "0.45rem" }}>
         ドラッグで回転 / ホイールでズーム。空きスロットをクリックで種まき、株をクリックで詳細。床の色はその場所の光量。
+        {devices.circulator && (
+          <span>
+            {" "}
+            {airflowAt(devices, shelf.x, shelf.y)
+              ? "🌀 サーキュレーターの風が届いている (蒸れ・害虫を抑制)"
+              : "💨 この棚にはサーキュレーターの風が届いていない"}
+          </span>
+        )}
       </div>
 
       <h3>💡 各段の LED ライト</h3>

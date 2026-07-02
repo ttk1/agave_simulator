@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import {
+  CIRCULATOR_DEFAULT_POS,
   DEVICE_SPEC,
   FERT_SPEC,
   LED_SPEC,
@@ -77,6 +78,8 @@ interface GameStore {
   selectedPlantId: string | null;
   movingPlantId: string | null;
   movingShelfId: string | null;
+  /** サーキュレーターの設置マス選択中か */
+  movingCirculator: boolean;
   sowTarget: SlotRef | "bench" | null;
   placingShelf: ShelfKind | null;
   showReport: boolean;
@@ -116,6 +119,9 @@ interface GameStore {
   /** 棚の移動モードの開始/解除 */
   startMoveShelf: (shelfId: string | null) => void;
   moveShelf: (shelfId: string, x: number, y: number) => void;
+  /** サーキュレーターの設置マス選択の開始/解除 */
+  startMoveCirculator: (b: boolean) => void;
+  placeCirculator: (x: number, y: number) => void;
   rotateShelf: (shelfId: string) => void;
   installLed: (shelfId: string, level: number, power: LedPower) => void;
   uninstallLed: (shelfId: string, level: number) => void;
@@ -246,6 +252,7 @@ export const useGame = create<GameStore>()(
         selectedPlantId: null,
         movingPlantId: null,
         movingShelfId: null,
+        movingCirculator: false,
         sowTarget: null,
         placingShelf: null,
         showReport: false,
@@ -253,12 +260,12 @@ export const useGame = create<GameStore>()(
         showSettings: false,
         toast: null,
 
-        setView: (v) => set({ view: v, movingPlantId: null, movingShelfId: null, placingShelf: null }),
+        setView: (v) => set({ view: v, movingPlantId: null, movingShelfId: null, movingCirculator: false, placingShelf: null }),
         openShelf: (id) => set({ view: "shelf", activeShelfId: id, selectedPlantId: null }),
         selectPlant: (id) => set({ selectedPlantId: id }),
         startMove: (plantId) => set({ movingPlantId: plantId }),
         setSowTarget: (t) => set({ sowTarget: t }),
-        setPlacingShelf: (k) => set({ placingShelf: k }),
+        setPlacingShelf: (k) => set({ placingShelf: k, movingCirculator: false }),
         closeReport: () => set({ showReport: false }),
         setShowHelp: (b) => set({ showHelp: b, helpSeen: true }),
         setShowSettings: (b) => set({ showSettings: b }),
@@ -547,7 +554,7 @@ export const useGame = create<GameStore>()(
           });
         },
 
-        startMoveShelf: (shelfId) => set({ movingShelfId: shelfId, placingShelf: null }),
+        startMoveShelf: (shelfId) => set({ movingShelfId: shelfId, placingShelf: null, movingCirculator: false }),
 
         moveShelf: (shelfId, x, y) => {
           const s = get();
@@ -562,6 +569,17 @@ export const useGame = create<GameStore>()(
             movingShelfId: null,
             toast: `↔️ ${shelf.name} を移動した`,
           });
+        },
+
+        startMoveCirculator: (b) => set({ movingCirculator: b, movingShelfId: null, placingShelf: null }),
+
+        placeCirculator: (x, y) => {
+          if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
+          set((s) => ({
+            devices: { ...s.devices, circulatorPos: { x, y } },
+            movingCirculator: false,
+            toast: "🌀 サーキュレーターを設置した (風は周囲8マスまで)",
+          }));
         },
 
         rotateShelf: (shelfId) => {
@@ -711,8 +729,16 @@ export const useGame = create<GameStore>()(
           if (s.devices[d]) return set({ toast: "すでに持っている" });
           if (!pay(DEVICE_SPEC[d].price, DEVICE_SPEC[d].name)) return;
           set((st) => ({
-            devices: { ...st.devices, [d]: true, [`${d}On`]: true } as Devices,
-            toast: `${DEVICE_SPEC[d].name} を購入した (稼働中)`,
+            devices: {
+              ...st.devices,
+              [d]: true,
+              [`${d}On`]: true,
+              ...(d === "circulator" ? { circulatorPos: st.devices.circulatorPos ?? CIRCULATOR_DEFAULT_POS } : {}),
+            } as Devices,
+            toast:
+              d === "circulator"
+                ? `${DEVICE_SPEC[d].name} を購入した (部屋画面で置き場所を決めよう)`
+                : `${DEVICE_SPEC[d].name} を購入した (稼働中)`,
           }));
         },
 
@@ -727,6 +753,7 @@ export const useGame = create<GameStore>()(
             selectedPlantId: null,
             movingPlantId: null,
             movingShelfId: null,
+            movingCirculator: false,
             placingShelf: null,
             showHelp: true,
             showReport: false,

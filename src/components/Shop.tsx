@@ -159,7 +159,10 @@ export function Shop() {
         </div>
         <div className="shop-item">
           <div className="title">{DEVICE_SPEC.circulator.name}</div>
-          <div className="muted">蒸れ・根腐れ・害虫を抑える。電気代 ¥{elec(DEVICE_SPEC.circulator.elecPerDay)}/日</div>
+          <div className="muted">
+            置いたマスと周囲8マスの蒸れ・根腐れ・害虫を抑える (部屋画面で設置)。電気代 ¥
+            {elec(DEVICE_SPEC.circulator.elecPerDay)}/日
+          </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <span className="price">{fmtMoney(DEVICE_SPEC.circulator.price)}</span>
             <button

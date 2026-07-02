@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DEVICE_SPEC, ROOM_COLS, ROOM_ROWS, SHELF_SPEC, WINDOW_X } from "../game/constants";
+import { airflowAt, circulatorPos } from "../game/environment";
 import { useGame } from "../game/store";
 import type { Shelf } from "../game/types";
 import { RoomScene } from "../three/RoomScene";
@@ -12,8 +13,11 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
   const plants = useGame((s) => s.plants);
   const rotateShelf = useGame((s) => s.rotateShelf);
   const startMoveShelf = useGame((s) => s.startMoveShelf);
+  const devices = useGame((s) => s.devices);
+  const movingCirculator = useGame((s) => s.movingCirculator);
   const count = shelf.levels.reduce((a, lv) => a + lv.slots.filter(Boolean).length, 0);
   const leds = shelf.levels.filter((lv) => lv.led).length;
+  const windy = airflowAt(devices, shelf.x, shelf.y);
   const alerts = shelf.levels
     .flatMap((lv) => lv.slots)
     .filter((pid): pid is string => !!pid)
@@ -21,11 +25,19 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
     .filter((p) => p && (p.pest || p.rot > 0.5 || p.health < 40)).length;
 
   return (
-    <div className="shelf-card" onClick={() => openShelf(shelf.id)} title={SHELF_SPEC[shelf.kind].name}>
+    <div
+      className="shelf-card"
+      onClick={() => {
+        // サーキュレーター設置中はマス側のクリックに任せる
+        if (!movingCirculator) openShelf(shelf.id);
+      }}
+      title={SHELF_SPEC[shelf.kind].name}
+    >
       <div className="icon">{shelf.kind === "large" ? "🗄️" : "🪜"}</div>
       <div className="name">{shelf.name}</div>
       <div className="count">
         🪴 {count} ／ 💡 {leds}
+        {windy && <span title="サーキュレーターの風が届いている"> 🌀</span>}
         {alerts > 0 && <span style={{ color: "var(--danger)" }}> ⚠️{alerts}</span>}
       </div>
       <div className="row" style={{ gap: "0.25rem" }} onClick={(e) => e.stopPropagation()}>
@@ -61,8 +73,12 @@ export function RoomView() {
   const movingShelfId = useGame((s) => s.movingShelfId);
   const startMoveShelf = useGame((s) => s.startMoveShelf);
   const moveShelf = useGame((s) => s.moveShelf);
+  const movingCirculator = useGame((s) => s.movingCirculator);
+  const startMoveCirculator = useGame((s) => s.startMoveCirculator);
+  const placeCirculator = useGame((s) => s.placeCirculator);
   const [mode3d, setMode3d] = useState(false);
   const movingShelf = movingShelfId ? shelves.find((sh) => sh.id === movingShelfId) : null;
+  const circPos = devices.circulator ? circulatorPos(devices) : null;
 
   const shelfAt = (x: number, y: number) => shelves.find((sh) => sh.x === x && sh.y === y);
 
@@ -94,10 +110,16 @@ export function RoomView() {
           <button onClick={() => startMoveShelf(null)}>キャンセル</button>
         </div>
       )}
+      {movingCirculator && (
+        <div className="picking-banner">
+          <span>🌀 サーキュレーターを置くマスをクリック (棚と同じマスにも置ける。風は周囲8マスまで)</span>
+          <button onClick={() => startMoveCirculator(false)}>キャンセル</button>
+        </div>
+      )}
 
       {mode3d ? (
         <div className="shelf-canvas">
-          <RoomScene shelves={shelves} plants={plants} day={day} onShelfClick={(id) => openShelf(id)} />
+          <RoomScene shelves={shelves} plants={plants} day={day} devices={devices} onShelfClick={(id) => openShelf(id)} />
         </div>
       ) : (
         <>
@@ -113,16 +135,27 @@ export function RoomView() {
             {Array.from({ length: ROOM_ROWS }).map((_, y) =>
               Array.from({ length: ROOM_COLS }).map((_, x) => {
                 const shelf = shelfAt(x, y);
-                const placeable = (!!placingShelf || !!movingShelfId) && !shelf;
+                const placeable = movingCirculator || ((!!placingShelf || !!movingShelfId) && !shelf);
+                const windy = airflowAt(devices, x, y);
+                const isCirc = !!circPos && circPos.x === x && circPos.y === y;
                 return (
                   <div
                     key={`${x}-${y}`}
-                    className={`room-cell${placeable ? " placeable" : ""}`}
+                    className={`room-cell${placeable ? " placeable" : ""}${windy ? " windy" : ""}`}
                     onClick={() => {
-                      if (!shelf && placingShelf) placeShelf(placingShelf, x, y);
+                      if (movingCirculator) placeCirculator(x, y);
+                      else if (!shelf && placingShelf) placeShelf(placingShelf, x, y);
                       else if (!shelf && movingShelfId) moveShelf(movingShelfId, x, y);
                     }}
                   >
+                    {isCirc && (
+                      <span
+                        className={`circ-badge${devices.circulatorOn ? "" : " off"}`}
+                        title={`サーキュレーター (${devices.circulatorOn ? "稼働中" : "停止中"})`}
+                      >
+                        🌀
+                      </span>
+                    )}
                     {shelf ? <ShelfCard shelf={shelf} /> : placeable ? <span className="muted">＋</span> : null}
                   </div>
                 );
@@ -165,7 +198,13 @@ export function RoomView() {
           )}
           {devices.circulator ? (
             <div className="row" style={{ marginBottom: "0.45rem" }}>
-              <span style={{ flex: 1 }}>🌀 {DEVICE_SPEC.circulator.name}</span>
+              <span style={{ flex: 1 }}>
+                🌀 {DEVICE_SPEC.circulator.name}
+                <span className="muted" style={{ fontSize: "0.78rem" }}> — 風は周囲8マスまで</span>
+              </span>
+              <button className="mini" onClick={() => startMoveCirculator(true)}>
+                ✥ 移動
+              </button>
               <button onClick={() => toggleDevice("circulatorOn")}>{devices.circulatorOn ? "ON" : "OFF"}</button>
             </div>
           ) : (

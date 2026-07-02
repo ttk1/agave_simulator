@@ -121,6 +121,8 @@ export interface Devices {
   heaterOn: boolean;
   circulator: boolean;
   circulatorOn: boolean;
+  /** サーキュレーターの設置マス。風が届くのは周囲 CIRCULATOR_RANGE マスまで (旧セーブは未設定) */
+  circulatorPos?: { x: number; y: number };
   aircon: boolean;
   airconOn: boolean;
 }

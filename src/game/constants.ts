@@ -62,6 +62,21 @@ export const DEVICE_SPEC = {
   aircon: { name: "エアコン (冷房)", price: 38000, elecPerDay: 60 },
 } as const;
 
+/**
+ * サーキュレーターの風が届く範囲 (チェビシェフ距離)。
+ * 1 = 置いたマスとその周囲 8 マス。範囲外の棚には蒸れ・害虫の抑制が効かない。
+ */
+export const CIRCULATOR_RANGE = 1;
+
+/** サーキュレーター購入時・旧セーブのデフォルト設置マス (部屋の中央付近) */
+export const CIRCULATOR_DEFAULT_POS = { x: 2, y: 1 };
+
+/**
+ * 害虫の伝播率 (感染株 1 株につき 1 日あたり)。発生率と同じく成長速度でスケール。
+ * airflowMult は伝播先の棚に風が届いているときの倍率。
+ */
+export const PEST_SPREAD = { sameShelf: 0.06, adjacentShelf: 0.02, airflowMult: 0.3 } as const;
+
 /** 冷房時の電気代: 1°C 冷やすごとの加算額 */
 export const AIRCON_COST_PER_DEG = 35;
 

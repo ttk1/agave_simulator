@@ -1,5 +1,5 @@
-import { DEVICE_SPEC, LED_SPEC, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "./constants";
-import { airconCost, roomHumidity, roomTemp, slotLight } from "./environment";
+import { DEVICE_SPEC, LED_SPEC, PEST_SPREAD, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "./constants";
+import { airconCost, airflowAt, roomHumidity, roomTemp, slotLight } from "./environment";
 import { growLeaf } from "./genetics";
 import type { Devices, Plant, Shelf } from "./types";
 
@@ -36,13 +36,14 @@ export function tickDay(
   const lines: string[] = [];
   const temp = roomTemp(day, devices, shelves);
   const humidity = roomHumidity(day);
-  const airflow = devices.circulator && devices.circulatorOn;
   const placement = buildPlacement(shelves);
 
   for (const p of Object.values(plants)) {
     if (p.stage === "dead") continue;
     const pos = placement.get(p.id);
     const light = pos ? slotLight(pos.shelf, pos.level, pos.col, day) : 0.05;
+    // 風はサーキュレーターの届く範囲の棚だけ (作業台には届かない)
+    const airflow = pos ? airflowAt(devices, pos.shelf.x, pos.shelf.y) : false;
     const soil = SOIL_SPEC[p.soil];
     const sp = SPECIES_MAP[p.speciesId];
 
@@ -170,6 +171,36 @@ export function tickDay(
     if (p.baseFertDays > 0) p.baseFertDays = Math.max(0, p.baseFertDays - growthSpeed);
     if (p.liquidFertDays > 0) p.liquidFertDays = Math.max(0, p.liquidFertDays - growthSpeed);
     if (p.stressDays > 0) p.stressDays = Math.max(0, p.stressDays - growthSpeed);
+  }
+
+  // --- 害虫の伝播 (同じ棚の株 → さらに隣のマスの棚の株へ) ---
+  // 感染源はこの日の開始時点で感染していた株のみ (同日連鎖はしない)
+  const infested = Object.values(plants).filter((p) => p.pest && p.stage !== "dead" && placement.has(p.id));
+  if (infested.length > 0) {
+    const newly: Plant[] = [];
+    for (const q of Object.values(plants)) {
+      if (q.pest || (q.stage !== "seedling" && q.stage !== "plant")) continue;
+      const qpos = placement.get(q.id);
+      if (!qpos) continue; // 作業台の株は棚から隔離されている
+      const windy = airflowAt(devices, qpos.shelf.x, qpos.shelf.y);
+      // 複数の感染源からのリスクを合算 (独立試行)
+      let risk = 0;
+      for (const src of infested) {
+        const spos = placement.get(src.id)!;
+        const sameShelf = spos.shelf.id === qpos.shelf.id;
+        const adjacent =
+          Math.abs(spos.shelf.x - qpos.shelf.x) + Math.abs(spos.shelf.y - qpos.shelf.y) === 1;
+        if (!sameShelf && !adjacent) continue;
+        let rate = (sameShelf ? PEST_SPREAD.sameShelf : PEST_SPREAD.adjacentShelf) * growthSpeed;
+        if (windy) rate *= PEST_SPREAD.airflowMult;
+        risk = 1 - (1 - risk) * (1 - Math.min(0.5, rate));
+      }
+      if (risk > 0 && Math.random() < risk) newly.push(q);
+    }
+    for (const q of newly) {
+      q.pest = true;
+      lines.push(`🐛 ${q.name} に害虫がうつった！ 感染源ごと早めに駆除しよう`);
+    }
   }
 
   // --- 電気代 ---

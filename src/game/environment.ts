@@ -2,6 +2,8 @@ import {
   AIRCON_COST_PER_DEG,
   AIRCON_MAX_TEMP,
   AMBIENT_LIGHT,
+  CIRCULATOR_DEFAULT_POS,
+  CIRCULATOR_RANGE,
   DEVICE_SPEC,
   LED_FALLOFF,
   LED_HEAT,
@@ -84,6 +86,21 @@ export function airconCost(day: number, devices: Devices, shelves: Shelf[]): num
   if (!devices.aircon || !devices.airconOn) return 0;
   const over = Math.max(0, roomTempRaw(day, devices, shelves) - AIRCON_MAX_TEMP);
   return Math.round(DEVICE_SPEC.aircon.elecPerDay + AIRCON_COST_PER_DEG * over);
+}
+
+/** サーキュレーターの設置マス (旧セーブは未設定なのでデフォルト位置) */
+export function circulatorPos(devices: Devices): { x: number; y: number } {
+  return devices.circulatorPos ?? CIRCULATOR_DEFAULT_POS;
+}
+
+/**
+ * そのマスにサーキュレーターの風が届いているか。
+ * 稼働中で、設置マスから CIRCULATOR_RANGE マス以内 (周囲 8 マス) のみ有効。
+ */
+export function airflowAt(devices: Devices, x: number, y: number): boolean {
+  if (!devices.circulator || !devices.circulatorOn) return false;
+  const pos = circulatorPos(devices);
+  return Math.max(Math.abs(x - pos.x), Math.abs(y - pos.y)) <= CIRCULATOR_RANGE;
 }
 
 /** 室内湿度 0..1。夏に高い */

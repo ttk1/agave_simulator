@@ -3,8 +3,8 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense, useMemo, useState } from "react";
 import * as THREE from "three";
 import { CELL, ROOM_COLS, ROOM_ROWS, WALL_H, WINDOW_X, WINDOW_Y_RANGE } from "../game/constants";
-import { sunStrength } from "../game/environment";
-import type { Plant, Shelf } from "../game/types";
+import { circulatorPos, sunStrength } from "../game/environment";
+import type { Devices, Plant, Shelf } from "../game/types";
 import { ShelfModel } from "./ShelfModel";
 import { SunPool, WindowUnit } from "./WindowUnit";
 
@@ -86,15 +86,52 @@ function ClickableShelf({
   );
 }
 
+/** サーキュレーターの簡易モデル (支柱 + ファンヘッド)。棚と同居できるようマスの隅に置く */
+function CirculatorModel({ x, y, on }: { x: number; y: number; on: boolean }) {
+  const [px, pz] = cellPos(x, y);
+  return (
+    <group position={[px + CELL * 0.34, 0, pz + CELL * 0.34]}>
+      {/* 台座と支柱 */}
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[0.22, 0.26, 0.08, 16]} />
+        <meshStandardMaterial color="#39424e" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.045, 0.045, 0.9, 8]} />
+        <meshStandardMaterial color="#7c848e" metalness={0.6} roughness={0.4} />
+      </mesh>
+      {/* ファンヘッド (少し上向き。Z 軸まわりに回して部屋の中央へ向ける) */}
+      <group position={[0, 1.0, 0]} rotation={[-0.35, Math.PI * 1.25, 0]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.34, 0.34, 0.22, 20, 1, true]} />
+          <meshStandardMaterial color="#4a545f" roughness={0.5} side={THREE.DoubleSide} />
+        </mesh>
+        {/* 羽根 (稼働中はうっすら発光する円盤で回転を表現) */}
+        <mesh position={[0, 0, 0.02]}>
+          <circleGeometry args={[0.3, 20]} />
+          <meshStandardMaterial
+            color="#9fb4c6"
+            emissive={on ? "#bcd8f0" : "#000"}
+            emissiveIntensity={on ? 0.4 : 0}
+            transparent
+            opacity={on ? 0.85 : 0.95}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 interface Props {
   shelves: Shelf[];
   plants: Record<string, Plant>;
   day: number;
+  devices: Devices;
   onShelfClick: (shelfId: string) => void;
 }
 
 /** 部屋全体の 3D ビュー (鑑賞モード)。棚クリックで棚画面へ */
-export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
+export function RoomScene({ shelves, plants, day, devices, onShelfClick }: Props) {
   const roomW = ROOM_COLS * CELL;
   const roomD = ROOM_ROWS * CELL;
   const wallZ = -roomD / 2; // 北壁 (窓側)
@@ -186,6 +223,10 @@ export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
         {shelves.map((sh) => (
           <ClickableShelf key={sh.id} shelf={sh} plants={plants} day={day} onClick={() => onShelfClick(sh.id)} />
         ))}
+
+        {devices.circulator && (
+          <CirculatorModel x={circulatorPos(devices).x} y={circulatorPos(devices).y} on={devices.circulatorOn} />
+        )}
 
         <OrbitControls
           target={[0, 1.6, 0]}
