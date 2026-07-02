@@ -2,11 +2,10 @@ import { OrbitControls, useCursor } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useMemo, useState } from "react";
 import * as THREE from "three";
-import { ROOM_COLS, ROOM_ROWS, WINDOW_X } from "../game/constants";
+import { CELL, ROOM_COLS, ROOM_ROWS, WALL_H, WINDOW_X, WINDOW_Y_RANGE } from "../game/constants";
 import { sunStrength } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
 import { ShelfModel } from "./ShelfModel";
-import { CELL, WALL_H } from "./roomDims";
 import { SunPool, WindowUnit } from "./WindowUnit";
 
 function cellPos(x: number, y: number): [number, number] {
@@ -105,6 +104,8 @@ export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
   const [winR] = cellPos(WINDOW_X[1], 0);
   const winCenter = (winL + winR) / 2;
   const winWidth = winR - winL + CELL * 0.7;
+  const [winBot, winTop] = WINDOW_Y_RANGE;
+  const winY = (winBot + winTop) / 2;
 
   return (
     <Canvas shadows camera={{ position: [roomW * 0.42, WALL_H * 2.1, roomD * 1.05], fov: 45 }}>
@@ -137,19 +138,34 @@ export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
         </mesh>
         <RoomGrid />
 
-        {/* 北壁 (窓付き) */}
-        <mesh position={[0, WALL_H / 2, wallZ - 0.12]} receiveShadow>
-          <boxGeometry args={[roomW + 0.4, WALL_H, 0.24]} />
+        {/* 北壁 (窓の開口を実際に開けた 4 パネル。castShadow で光は窓からだけ入る) */}
+        <mesh position={[0, winBot / 2, wallZ - 0.12]} castShadow receiveShadow>
+          <boxGeometry args={[roomW + 0.4, winBot, 0.24]} />
           <meshStandardMaterial color="#4a5564" roughness={0.9} />
         </mesh>
+        <mesh position={[0, (winTop + WALL_H) / 2, wallZ - 0.12]} castShadow receiveShadow>
+          <boxGeometry args={[roomW + 0.4, WALL_H - winTop, 0.24]} />
+          <meshStandardMaterial color="#4a5564" roughness={0.9} />
+        </mesh>
+        {[-1, 1].map((s) => {
+          const edgeX = s > 0 ? roomW / 2 + 0.2 : -roomW / 2 - 0.2;
+          const innerX = winCenter + (s * winWidth) / 2;
+          const w = Math.abs(edgeX - innerX);
+          return (
+            <mesh key={s} position={[(edgeX + innerX) / 2, winY, wallZ - 0.12]} castShadow receiveShadow>
+              <boxGeometry args={[w, winTop - winBot, 0.24]} />
+              <meshStandardMaterial color="#4a5564" roughness={0.9} />
+            </mesh>
+          );
+        })}
         {/* 幅木 (北壁) */}
         <mesh position={[0, 0.13, wallZ + 0.03]}>
           <boxGeometry args={[roomW + 0.4, 0.26, 0.06]} />
           <meshStandardMaterial color="#1e242c" roughness={0.7} />
         </mesh>
         {/* 窓 (枠・空・にじみ光) */}
-        <group position={[winCenter, WALL_H * 0.55, wallZ + 0.04]}>
-          <WindowUnit width={winWidth} height={WALL_H * 0.6} day={day} />
+        <group position={[winCenter, winY, wallZ + 0.04]}>
+          <WindowUnit width={winWidth} height={winTop - winBot} day={day} />
         </group>
         {/* 床の光だまり */}
         <group position={[winCenter, 0, wallZ]}>

@@ -1,13 +1,13 @@
 import { useCursor } from "@react-three/drei";
 import { useMemo, useState } from "react";
 import * as THREE from "three";
-import { LED_SPEC } from "../game/constants";
+import { LED_SPEC, SHELF_LEVEL_H } from "../game/constants";
 import { slotLight } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
 import { AgaveMesh } from "./AgaveMesh";
 
 export const SX = 1.18; // スロット間隔
-export const HY = 1.5; // 段の高さ
+export const HY = SHELF_LEVEL_H; // 段の高さ (光量計算と共有)
 export const BOARD_T = 0.06;
 
 export function shelfWidth(shelf: Shelf): number {
@@ -134,9 +134,9 @@ export function ShelfModel({ shelf, plants, day, selectedPlantId = null, picking
                 {lv.led.on && (
                   <pointLight
                     position={[0, -0.1, 0]}
-                    intensity={LED_SPEC[lv.led.power].intensity * 6}
-                    distance={HY * 2.4}
-                    decay={1.6}
+                    intensity={LED_SPEC[lv.led.power].intensity * 7}
+                    distance={HY * 1.7}
+                    decay={2}
                     color="#fff2dc"
                     castShadow={false}
                   />

@@ -1,17 +1,20 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
+import * as THREE from "three";
+import { CELL, WALL_H, WINDOW_Y_RANGE } from "../game/constants";
 import { sunStrength, windowSide } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
 import { ShelfModel, shelfHeight, shelfWidth } from "./ShelfModel";
-import { CELL, WALL_H } from "./roomDims";
 import { SunPool, WindowUnit } from "./WindowUnit";
 
-// 部屋ビュー (RoomScene) と同じ壁・窓の寸法に揃える
 const WALL_LEN = 22;
 
 /**
  * 窓のある壁を、棚から距離をあけて配置する。寸法・見え方は部屋ビューと同一。
+ * 壁は窓の開口部を実際に開けた 4 枚のパネルで作り、影を落とす (castShadow) ので、
+ * 光は窓からだけ差し込む。光線は浅い下向きで、窓の高さに正対する中段・上段に
+ * 当たり、窓より下の最下段は暗くなる = windowBonus の段係数と対応する。
  * 棚は正面固定で描くので、棚の向き (rot) は壁を置く方角に反映する
  * (rot 0 = 奥 / 1 = 右 / 2 = 手前 / 3 = 左)。
  */
@@ -20,18 +23,33 @@ function WindowWall({ side, width, near, day }: { side: number; width: number; n
   const gap = 0.78 + 3.0 + (near ? 0 : CELL);
   const sun = sunStrength(day);
   const winW = Math.max(width, 2.4); // 窓幅は棚の横幅に合わせる (最低幅あり)
-  const winH = WALL_H * 0.6;
-  const winY = WALL_H * 0.55;
+  const [winBot, winTop] = WINDOW_Y_RANGE;
+  const winH = winTop - winBot;
+  const winY = (winBot + winTop) / 2;
+  const sideW = (WALL_LEN - winW) / 2;
+  const wallZ = -gap - 0.12;
 
   const rotY = (side * Math.PI) / 2; // 0:奥 1:右 2:手前 3:左 (Y軸まわり)
+  const lightTarget = useMemo(() => new THREE.Object3D(), []);
+  const lightDist = gap + 8;
 
   return (
     <group rotation={[0, rotY, 0]}>
-      {/* 壁 (棚の奥方向 -Z に置く。group ごと回して方角を変える) */}
-      <mesh position={[0, WALL_H / 2, -gap - 0.12]} receiveShadow>
-        <boxGeometry args={[WALL_LEN, WALL_H, 0.24]} />
+      {/* 壁 (窓の開口を開けた 4 パネル。棚の奥方向 -Z に置き、group ごと回して方角を変える) */}
+      <mesh position={[0, winBot / 2, wallZ]} castShadow receiveShadow>
+        <boxGeometry args={[WALL_LEN, winBot, 0.24]} />
         <meshStandardMaterial color="#3e4855" roughness={0.9} />
       </mesh>
+      <mesh position={[0, (winTop + WALL_H) / 2, wallZ]} castShadow receiveShadow>
+        <boxGeometry args={[WALL_LEN, WALL_H - winTop, 0.24]} />
+        <meshStandardMaterial color="#3e4855" roughness={0.9} />
+      </mesh>
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * (winW / 2 + sideW / 2), winY, wallZ]} castShadow receiveShadow>
+          <boxGeometry args={[sideW, winH, 0.24]} />
+          <meshStandardMaterial color="#3e4855" roughness={0.9} />
+        </mesh>
+      ))}
       {/* 幅木 */}
       <mesh position={[0, 0.13, -gap + 0.03]}>
         <boxGeometry args={[WALL_LEN, 0.26, 0.06]} />
@@ -45,21 +63,23 @@ function WindowWall({ side, width, near, day }: { side: number; width: number; n
       <group position={[0, 0, -gap]}>
         <SunPool width={winW * 1.9} length={gap + 2.5} day={day} strength={near ? 1 : 0.55} />
       </group>
-      {/* 窓からの光 (棚と株の影を床に落とす) */}
+      {/* 窓からの光。浅い下向き (壁の開口だけを通る) */}
       <directionalLight
-        position={[0.6, winY + 1.2, -gap - 3]}
+        position={[0.8, 1.9 + 0.2 * lightDist, -lightDist]}
+        target={lightTarget}
         intensity={(near ? 1 : 0.55) * (0.5 + sun * 2.2)}
         color="#dce8ff"
         castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-7}
-        shadow-camera-right={7}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
         shadow-camera-top={8}
-        shadow-camera-bottom={-3}
+        shadow-camera-bottom={-8}
         shadow-camera-near={0.5}
-        shadow-camera-far={25}
+        shadow-camera-far={40}
         shadow-bias={-0.0004}
       />
+      <primitive object={lightTarget} position={[0, 1.9, 0]} />
     </group>
   );
 }

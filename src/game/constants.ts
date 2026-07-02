@@ -22,6 +22,20 @@ export const ROOM_ROWS = 4;
 /** 北壁 (y=0 側) の窓が面する列の範囲 [開始, 終了] */
 export const WINDOW_X: [number, number] = [2, 3];
 
+// ----- 部屋の 3D 寸法 (描画と光量計算で共有。単位は 3D 空間の長さ) -----
+
+/** 部屋の 1 マスの一辺 */
+export const CELL = 5.2;
+/** 壁の高さ */
+export const WALL_H = 5.4;
+/** 棚 1 段の高さ (ShelfModel の段ピッチと同一) */
+export const SHELF_LEVEL_H = 1.5;
+/**
+ * 窓ガラスの高さ範囲 [下端, 上端]。
+ * この高さに重なる棚の段ほど窓光が正面から入る (windowBonus の段係数の根拠)。
+ */
+export const WINDOW_Y_RANGE: [number, number] = [WALL_H * 0.25, WALL_H * 0.85];
+
 export const SHELF_SPEC: Record<ShelfKind, { name: string; levels: number; cols: number; price: number }> = {
   small: { name: "スチールラック (小)", levels: 2, cols: 3, price: 6000 },
   large: { name: "メタルラック (大)", levels: 3, cols: 4, price: 15000 },
