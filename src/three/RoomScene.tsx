@@ -6,9 +6,8 @@ import { ROOM_COLS, ROOM_ROWS, WINDOW_X } from "../game/constants";
 import { sunStrength } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
 import { ShelfModel } from "./ShelfModel";
-
-const CELL = 5.2;
-const WALL_H = 5.4;
+import { CELL, WALL_H } from "./roomDims";
+import { SunPool, WindowUnit } from "./WindowUnit";
 
 function cellPos(x: number, y: number): [number, number] {
   return [(x - (ROOM_COLS - 1) / 2) * CELL, (y - (ROOM_ROWS - 1) / 2) * CELL];
@@ -111,48 +110,61 @@ export function RoomScene({ shelves, plants, day, onShelfClick }: Props) {
     <Canvas shadows camera={{ position: [roomW * 0.42, WALL_H * 2.1, roomD * 1.05], fov: 45 }}>
       <Suspense fallback={null}>
         <color attach="background" args={["#0a0e14"]} />
-        <ambientLight intensity={0.5} />
-        {/* 窓からの太陽光 */}
+        {/* 空からの回り込み + 床からの照り返しで、壁が真っ黒に沈まないように */}
+        <hemisphereLight args={["#8fa0b8", "#332f28", 1.15]} />
+        <ambientLight intensity={0.45} />
+        {/* 窓からの太陽光 (棚の影を床に落とす) */}
         <directionalLight
-          position={[winCenter, WALL_H * 0.8, wallZ - 4]}
-          target-position={[winCenter, 0, wallZ + roomD * 0.4]}
+          position={[winCenter, WALL_H * 0.9, wallZ - 5]}
           intensity={sun * 2.2}
           color="#dce8ff"
+          castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-roomW * 0.6}
+          shadow-camera-right={roomW * 0.6}
+          shadow-camera-top={roomD * 0.8}
+          shadow-camera-bottom={-roomD * 0.5}
+          shadow-camera-near={0.5}
+          shadow-camera-far={45}
+          shadow-bias={-0.0004}
         />
-        <directionalLight position={[8, 12, 6]} intensity={0.4} />
+        <directionalLight position={[8, 12, 6]} intensity={0.5} />
 
         {/* 床 */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
           <planeGeometry args={[roomW + 0.4, roomD + 0.4]} />
-          <meshStandardMaterial color="#2b2620" roughness={0.92} />
+          <meshStandardMaterial color="#413a2f" roughness={0.92} />
         </mesh>
         <RoomGrid />
 
         {/* 北壁 (窓付き) */}
-        <mesh position={[0, WALL_H / 2, wallZ - 0.1]}>
-          <boxGeometry args={[roomW + 0.4, WALL_H, 0.2]} />
-          <meshStandardMaterial color="#262e3a" roughness={0.9} />
+        <mesh position={[0, WALL_H / 2, wallZ - 0.12]} receiveShadow>
+          <boxGeometry args={[roomW + 0.4, WALL_H, 0.24]} />
+          <meshStandardMaterial color="#4a5564" roughness={0.9} />
         </mesh>
-        {/* 窓 (発光) */}
-        <mesh position={[winCenter, WALL_H * 0.55, wallZ + 0.02]}>
-          <planeGeometry args={[winWidth, WALL_H * 0.6]} />
-          <meshStandardMaterial
-            color="#9db8d8"
-            emissive="#bcd4f5"
-            emissiveIntensity={0.4 + sun * 2}
-            roughness={0.2}
-          />
+        {/* 幅木 (北壁) */}
+        <mesh position={[0, 0.13, wallZ + 0.03]}>
+          <boxGeometry args={[roomW + 0.4, 0.26, 0.06]} />
+          <meshStandardMaterial color="#1e242c" roughness={0.7} />
         </mesh>
-        {/* 窓枠 */}
-        <mesh position={[winCenter, WALL_H * 0.55, wallZ + 0.03]}>
-          <boxGeometry args={[0.08, WALL_H * 0.6, 0.04]} />
-          <meshStandardMaterial color="#1a212b" />
-        </mesh>
+        {/* 窓 (枠・空・にじみ光) */}
+        <group position={[winCenter, WALL_H * 0.55, wallZ + 0.04]}>
+          <WindowUnit width={winWidth} height={WALL_H * 0.6} day={day} />
+        </group>
+        {/* 床の光だまり */}
+        <group position={[winCenter, 0, wallZ]}>
+          <SunPool width={winWidth * 1.9} length={CELL * 2.4} day={day} />
+        </group>
 
         {/* 西壁 */}
-        <mesh position={[wallX - 0.1, WALL_H / 2, 0]}>
-          <boxGeometry args={[0.2, WALL_H, roomD + 0.4]} />
-          <meshStandardMaterial color="#222a35" roughness={0.9} />
+        <mesh position={[wallX - 0.12, WALL_H / 2, 0]} receiveShadow>
+          <boxGeometry args={[0.24, WALL_H, roomD + 0.4]} />
+          <meshStandardMaterial color="#434e5c" roughness={0.9} />
+        </mesh>
+        {/* 幅木 (西壁) */}
+        <mesh position={[wallX + 0.03, 0.13, 0]}>
+          <boxGeometry args={[0.06, 0.26, roomD + 0.4]} />
+          <meshStandardMaterial color="#1e242c" roughness={0.7} />
         </mesh>
 
         {shelves.map((sh) => (

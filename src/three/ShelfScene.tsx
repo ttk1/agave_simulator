@@ -4,10 +4,11 @@ import { Suspense } from "react";
 import { sunStrength, windowSide } from "../game/environment";
 import type { Plant, Shelf } from "../game/types";
 import { ShelfModel, shelfHeight, shelfWidth } from "./ShelfModel";
+import { CELL, WALL_H } from "./roomDims";
+import { SunPool, WindowUnit } from "./WindowUnit";
 
 // 部屋ビュー (RoomScene) と同じ壁・窓の寸法に揃える
-const WALL_H = 5.4;
-const WALL_LEN = 14;
+const WALL_LEN = 22;
 
 /**
  * 窓のある壁を、棚から距離をあけて配置する。寸法・見え方は部屋ビューと同一。
@@ -15,9 +16,10 @@ const WALL_LEN = 14;
  * (rot 0 = 奥 / 1 = 右 / 2 = 手前 / 3 = 左)。
  */
 function WindowWall({ side, width, near, day }: { side: number; width: number; near: boolean; day: number }) {
-  const gap = 0.78 + 3.0; // 棚の奥行き縁 + 距離
+  // 窓に近い棚 (near) は壁が近く、1 マス離れた棚は部屋のマス目 1 つぶん (CELL) 窓が遠のく
+  const gap = 0.78 + 3.0 + (near ? 0 : CELL);
   const sun = sunStrength(day);
-  const winW = width; // 窓幅は棚の横幅に合わせる
+  const winW = Math.max(width, 2.4); // 窓幅は棚の横幅に合わせる (最低幅あり)
   const winH = WALL_H * 0.6;
   const winY = WALL_H * 0.55;
 
@@ -26,17 +28,38 @@ function WindowWall({ side, width, near, day }: { side: number; width: number; n
   return (
     <group rotation={[0, rotY, 0]}>
       {/* 壁 (棚の奥方向 -Z に置く。group ごと回して方角を変える) */}
-      <mesh position={[0, WALL_H / 2, -gap - 0.1]}>
-        <boxGeometry args={[WALL_LEN, WALL_H, 0.2]} />
-        <meshStandardMaterial color="#262e3a" roughness={0.9} />
+      <mesh position={[0, WALL_H / 2, -gap - 0.12]} receiveShadow>
+        <boxGeometry args={[WALL_LEN, WALL_H, 0.24]} />
+        <meshStandardMaterial color="#3e4855" roughness={0.9} />
       </mesh>
-      {/* 窓ガラス (発光) */}
-      <mesh position={[0, winY, -gap + 0.02]}>
-        <planeGeometry args={[winW, winH]} />
-        <meshStandardMaterial color="#9db8d8" emissive="#bcd4f5" emissiveIntensity={(near ? 0.6 : 0.3) + sun * 2} roughness={0.2} />
+      {/* 幅木 */}
+      <mesh position={[0, 0.13, -gap + 0.03]}>
+        <boxGeometry args={[WALL_LEN, 0.26, 0.06]} />
+        <meshStandardMaterial color="#1e242c" roughness={0.7} />
       </mesh>
-      {/* 窓からの光 */}
-      <directionalLight position={[0, winY, -gap - 2]} target-position={[0, 0, 0]} intensity={sun * 1.4} color="#dce8ff" />
+      {/* 窓 (枠・空・にじみ光) */}
+      <group position={[0, winY, -gap + 0.04]}>
+        <WindowUnit width={winW} height={winH} day={day} />
+      </group>
+      {/* 床の光だまり */}
+      <group position={[0, 0, -gap]}>
+        <SunPool width={winW * 1.9} length={gap + 2.5} day={day} strength={near ? 1 : 0.55} />
+      </group>
+      {/* 窓からの光 (棚と株の影を床に落とす) */}
+      <directionalLight
+        position={[0.6, winY + 1.2, -gap - 3]}
+        intensity={(near ? 1 : 0.55) * (0.5 + sun * 2.2)}
+        color="#dce8ff"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-7}
+        shadow-camera-right={7}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-3}
+        shadow-camera-near={0.5}
+        shadow-camera-far={25}
+        shadow-bias={-0.0004}
+      />
     </group>
   );
 }
@@ -62,13 +85,15 @@ export function ShelfScene({ shelf, plants, day, selectedPlantId, picking, onSlo
       <Suspense fallback={null}>
         <color attach="background" args={["#10151c"]} />
         <fog attach="fog" args={["#10151c", camDist + 9, camDist + 22]} />
-        <ambientLight intensity={0.35} />
-        <directionalLight position={[4, 8, 5]} intensity={0.5} />
+        {/* 空からの回り込み + 床からの照り返しで、無光源部でも真っ黒に沈まないように */}
+        <hemisphereLight args={["#8fa0b8", "#2f2c26", 0.75]} />
+        <ambientLight intensity={0.3} />
+        <directionalLight position={[4, 8, 5]} intensity={0.55} />
 
         {/* 床 */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-          <planeGeometry args={[16, 16]} />
-          <meshStandardMaterial color="#1a2129" roughness={0.95} />
+          <planeGeometry args={[44, 44]} />
+          <meshStandardMaterial color="#222a33" roughness={0.95} />
         </mesh>
 
         <ShelfModel
