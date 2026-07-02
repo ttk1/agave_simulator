@@ -114,6 +114,8 @@ export interface Inventory {
   liquidFert: number;
   leds: Record<LedPower, number>;
   shelves: Record<ShelfKind, number>;
+  /** 未設置の家具 (旧セーブには無いので optional) */
+  furniture?: Partial<Record<FurnitureKind, number>>;
 }
 
 export interface Devices {
@@ -125,6 +127,20 @@ export interface Devices {
   circulatorPos?: { x: number; y: number };
   aircon: boolean;
   airconOn: boolean;
+}
+
+/** 飾り家具の種類 (見た目だけで育成には影響しない) */
+export type FurnitureKind = "bed" | "tableSet" | "closet" | "desk" | "bookshelf" | "sofa" | "lamp";
+
+/** 部屋に置かれた家具 1 つ */
+export interface Furniture {
+  id: string;
+  kind: FurnitureKind;
+  /** 部屋グリッド上の位置 */
+  x: number;
+  y: number;
+  /** 向き (90° 単位の回転回数 0..3)。0 = 正面が南 (部屋の手前) 向き */
+  rot?: number;
 }
 
 export interface CollectionEntry {

@@ -1,4 +1,4 @@
-import type { LedPower, PotSize, ShelfKind, SoilType, SpeciesDef } from "./types";
+import type { FurnitureKind, LedPower, PotSize, ShelfKind, SoilType, SpeciesDef } from "./types";
 
 // ===== 時間の進み方 =====
 
@@ -88,6 +88,18 @@ export const LED_HEAT: Record<LedPower, number> = { 1: 0.4, 2: 0.7, 3: 1.0 };
 
 /** LED 発熱による室温上昇の上限 (°C) */
 export const LED_HEAT_CAP = 8;
+
+// ===== 家具 (見た目だけ。育成には影響しない) =====
+
+export const FURNITURE_SPEC: Record<FurnitureKind, { name: string; icon: string; price: number; desc: string }> = {
+  bed: { name: "ベッド", icon: "🛏️", price: 25000, desc: "植物と暮らす部屋の必需品。ここで寝起きして水やりへ" },
+  tableSet: { name: "ダイニングテーブル", icon: "🍽️", price: 18000, desc: "椅子つき。食事しながら株を眺められる特等席" },
+  closet: { name: "クローゼット", icon: "🚪", price: 15000, desc: "園芸用エプロンと普段着をしまう" },
+  desk: { name: "作業机 & PC", icon: "🖥️", price: 20000, desc: "相場チェックとオークション出品はここから" },
+  bookshelf: { name: "本棚", icon: "📚", price: 8000, desc: "多肉植物の図鑑や園芸書がぎっしり" },
+  sofa: { name: "ソファ", icon: "🛋️", price: 22000, desc: "育成をひと休み。座って眺める株は格別" },
+  lamp: { name: "フロアランプ", icon: "🕯️", price: 6000, desc: "夜の部屋をやわらかく照らす (株の光量には寄与しない)" },
+};
 
 // ===== 資材 =====
 

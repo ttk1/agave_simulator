@@ -368,6 +368,13 @@ h3 {
   filter: grayscale(1) opacity(0.5);
 }
 
+/* 飾り家具のカード (棚カードの暖色バリアント) */
+.shelf-card.furn {
+  border-color: #6e5a45;
+  background: linear-gradient(180deg, #3a3226, #2a2419);
+  cursor: default;
+}
+
 .shelf-card {
   width: 100%;
   height: 100%;

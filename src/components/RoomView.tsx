@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { DEVICE_SPEC, ROOM_COLS, ROOM_ROWS, SHELF_SPEC, WINDOW_X } from "../game/constants";
+import { DEVICE_SPEC, FURNITURE_SPEC, ROOM_COLS, ROOM_ROWS, SHELF_SPEC, WINDOW_X } from "../game/constants";
 import { airflowAt, circulatorPos } from "../game/environment";
 import { useGame } from "../game/store";
-import type { Shelf } from "../game/types";
+import type { Furniture, FurnitureKind, Shelf } from "../game/types";
 import { RoomScene } from "../three/RoomScene";
 
 /** 棚の正面が向いている方角 (rot 0 = 南/手前) */
@@ -15,6 +15,8 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
   const startMoveShelf = useGame((s) => s.startMoveShelf);
   const devices = useGame((s) => s.devices);
   const movingCirculator = useGame((s) => s.movingCirculator);
+  const placingFurniture = useGame((s) => s.placingFurniture);
+  const movingFurnitureId = useGame((s) => s.movingFurnitureId);
   const count = shelf.levels.reduce((a, lv) => a + lv.slots.filter(Boolean).length, 0);
   const leds = shelf.levels.filter((lv) => lv.led).length;
   const windy = airflowAt(devices, shelf.x, shelf.y);
@@ -28,8 +30,8 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
     <div
       className="shelf-card"
       onClick={() => {
-        // サーキュレーター設置中はマス側のクリックに任せる
-        if (!movingCirculator) openShelf(shelf.id);
+        // 設備・家具の設置マス選択中はマス側のクリックに任せる (誤って棚画面へ飛ばない)
+        if (!movingCirculator && !placingFurniture && !movingFurnitureId) openShelf(shelf.id);
       }}
       title={SHELF_SPEC[shelf.kind].name}
     >
@@ -56,6 +58,34 @@ function ShelfCard({ shelf }: { shelf: Shelf }) {
   );
 }
 
+function FurnitureCard({ furn }: { furn: Furniture }) {
+  const startMoveFurniture = useGame((s) => s.startMoveFurniture);
+  const rotateFurniture = useGame((s) => s.rotateFurniture);
+  const removeFurniture = useGame((s) => s.removeFurniture);
+  const spec = FURNITURE_SPEC[furn.kind];
+  return (
+    <div className="shelf-card furn" title={spec.desc}>
+      <div className="icon">{spec.icon}</div>
+      <div className="name">{spec.name}</div>
+      <div className="row" style={{ gap: "0.25rem" }} onClick={(e) => e.stopPropagation()}>
+        <button className="mini" title="移動" onClick={() => startMoveFurniture(furn.id)}>
+          ✥
+        </button>
+        <button
+          className="mini"
+          title={`90°回転。正面の向き ${ROT_ARROW[furn.rot ?? 0]}`}
+          onClick={() => rotateFurniture(furn.id)}
+        >
+          ↻ {ROT_ARROW[furn.rot ?? 0]}
+        </button>
+        <button className="mini" title="片付ける (在庫に戻す)" onClick={() => removeFurniture(furn.id)}>
+          🧺
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function RoomView() {
   const shelves = useGame((s) => s.shelves);
   const inventory = useGame((s) => s.inventory);
@@ -76,11 +106,22 @@ export function RoomView() {
   const movingCirculator = useGame((s) => s.movingCirculator);
   const startMoveCirculator = useGame((s) => s.startMoveCirculator);
   const placeCirculator = useGame((s) => s.placeCirculator);
+  const furniture = useGame((s) => s.furniture);
+  const placingFurniture = useGame((s) => s.placingFurniture);
+  const setPlacingFurniture = useGame((s) => s.setPlacingFurniture);
+  const placeFurniture = useGame((s) => s.placeFurniture);
+  const movingFurnitureId = useGame((s) => s.movingFurnitureId);
+  const startMoveFurniture = useGame((s) => s.startMoveFurniture);
+  const moveFurniture = useGame((s) => s.moveFurniture);
   const [mode3d, setMode3d] = useState(false);
   const movingShelf = movingShelfId ? shelves.find((sh) => sh.id === movingShelfId) : null;
+  const movingFurn = movingFurnitureId ? furniture.find((f) => f.id === movingFurnitureId) : null;
   const circPos = devices.circulator ? circulatorPos(devices) : null;
+  const furnInv = inventory.furniture ?? {};
+  const ownedFurnKinds = (Object.keys(FURNITURE_SPEC) as FurnitureKind[]).filter((k) => (furnInv[k] ?? 0) > 0);
 
   const shelfAt = (x: number, y: number) => shelves.find((sh) => sh.x === x && sh.y === y);
+  const furnAt = (x: number, y: number) => furniture.find((f) => f.x === x && f.y === y);
 
   return (
     <div>
@@ -116,10 +157,31 @@ export function RoomView() {
           <button onClick={() => startMoveCirculator(false)}>キャンセル</button>
         </div>
       )}
+      {placingFurniture && (
+        <div className="picking-banner">
+          <span>
+            {FURNITURE_SPEC[placingFurniture].icon} {FURNITURE_SPEC[placingFurniture].name} を置く空きマスをクリック
+          </span>
+          <button onClick={() => setPlacingFurniture(null)}>キャンセル</button>
+        </div>
+      )}
+      {movingFurn && (
+        <div className="picking-banner">
+          <span>✥ {FURNITURE_SPEC[movingFurn.kind].name} の移動先の空きマスをクリック</span>
+          <button onClick={() => startMoveFurniture(null)}>キャンセル</button>
+        </div>
+      )}
 
       {mode3d ? (
         <div className="shelf-canvas">
-          <RoomScene shelves={shelves} plants={plants} day={day} devices={devices} onShelfClick={(id) => openShelf(id)} />
+          <RoomScene
+            shelves={shelves}
+            plants={plants}
+            day={day}
+            devices={devices}
+            furniture={furniture}
+            onShelfClick={(id) => openShelf(id)}
+          />
         </div>
       ) : (
         <>
@@ -135,7 +197,11 @@ export function RoomView() {
             {Array.from({ length: ROOM_ROWS }).map((_, y) =>
               Array.from({ length: ROOM_COLS }).map((_, x) => {
                 const shelf = shelfAt(x, y);
-                const placeable = movingCirculator || ((!!placingShelf || !!movingShelfId) && !shelf);
+                const furn = furnAt(x, y);
+                const cellFree = !shelf && !furn;
+                const placeable =
+                  movingCirculator ||
+                  ((!!placingShelf || !!movingShelfId || !!placingFurniture || !!movingFurnitureId) && cellFree);
                 const windy = airflowAt(devices, x, y);
                 const isCirc = !!circPos && circPos.x === x && circPos.y === y;
                 return (
@@ -144,8 +210,10 @@ export function RoomView() {
                     className={`room-cell${placeable ? " placeable" : ""}${windy ? " windy" : ""}`}
                     onClick={() => {
                       if (movingCirculator) placeCirculator(x, y);
-                      else if (!shelf && placingShelf) placeShelf(placingShelf, x, y);
-                      else if (!shelf && movingShelfId) moveShelf(movingShelfId, x, y);
+                      else if (cellFree && placingShelf) placeShelf(placingShelf, x, y);
+                      else if (cellFree && movingShelfId) moveShelf(movingShelfId, x, y);
+                      else if (cellFree && placingFurniture) placeFurniture(placingFurniture, x, y);
+                      else if (cellFree && movingFurnitureId) moveFurniture(movingFurnitureId, x, y);
                     }}
                   >
                     {isCirc && (
@@ -156,7 +224,13 @@ export function RoomView() {
                         🌀
                       </span>
                     )}
-                    {shelf ? <ShelfCard shelf={shelf} /> : placeable ? <span className="muted">＋</span> : null}
+                    {shelf ? (
+                      <ShelfCard shelf={shelf} />
+                    ) : furn ? (
+                      <FurnitureCard furn={furn} />
+                    ) : placeable ? (
+                      <span className="muted">＋</span>
+                    ) : null}
                   </div>
                 );
               }),
@@ -167,7 +241,7 @@ export function RoomView() {
 
       <div className="cards-row">
         <div className="card">
-          <h3>📦 未設置の棚</h3>
+          <h3>📦 未設置の棚・家具</h3>
           {(Object.keys(SHELF_SPEC) as Array<keyof typeof SHELF_SPEC>).map((kind) => (
             <div className="row" key={kind} style={{ marginBottom: "0.45rem" }}>
               <span style={{ flex: 1 }}>
@@ -181,7 +255,17 @@ export function RoomView() {
               </button>
             </div>
           ))}
-          {inventory.shelves.small + inventory.shelves.large === 0 && (
+          {ownedFurnKinds.map((kind) => (
+            <div className="row" key={kind} style={{ marginBottom: "0.45rem" }}>
+              <span style={{ flex: 1 }}>
+                {FURNITURE_SPEC[kind].icon} {FURNITURE_SPEC[kind].name} × {furnInv[kind]}
+              </span>
+              <button disabled={placingFurniture === kind} onClick={() => setPlacingFurniture(kind)}>
+                設置する
+              </button>
+            </div>
+          ))}
+          {inventory.shelves.small + inventory.shelves.large === 0 && ownedFurnKinds.length === 0 && (
             <div className="muted">在庫なし。ショップで購入しよう</div>
           )}
         </div>

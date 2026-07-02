@@ -1,7 +1,17 @@
-import { DEVICE_SPEC, FERT_SPEC, LED_SPEC, POT_SPEC, SHELF_SPEC, SOIL_SPEC, SPECIES, TIER_LABEL } from "../game/constants";
+import {
+  DEVICE_SPEC,
+  FERT_SPEC,
+  FURNITURE_SPEC,
+  LED_SPEC,
+  POT_SPEC,
+  SHELF_SPEC,
+  SOIL_SPEC,
+  SPECIES,
+  TIER_LABEL,
+} from "../game/constants";
 import { fmtMoney } from "../game/economy";
 import { useGame } from "../game/store";
-import type { LedPower, PotSize, ShelfKind, SoilType } from "../game/types";
+import type { FurnitureKind, LedPower, PotSize, ShelfKind, SoilType } from "../game/types";
 
 export function Shop() {
   const money = useGame((s) => s.money);
@@ -18,6 +28,9 @@ export function Shop() {
   const buyLed = useGame((s) => s.buyLed);
   const buyShelf = useGame((s) => s.buyShelf);
   const buyDevice = useGame((s) => s.buyDevice);
+  const buyFurniture = useGame((s) => s.buyFurniture);
+  const furniture = useGame((s) => s.furniture);
+  const furnCount = (k: FurnitureKind) => (inventory.furniture?.[k] ?? 0) + furniture.filter((f) => f.kind === k).length;
 
   return (
     <div>
@@ -173,6 +186,26 @@ export function Shop() {
             </button>
           </div>
         </div>
+      </div>
+
+      <h3>🛋️ インテリア (見た目だけ。育成には影響しない)</h3>
+      <div className="shop-grid">
+        {(Object.keys(FURNITURE_SPEC) as FurnitureKind[]).map((k) => (
+          <div className="shop-item" key={k}>
+            <div className="title">
+              {FURNITURE_SPEC[k].icon} {FURNITURE_SPEC[k].name}
+            </div>
+            <div className="muted">
+              {FURNITURE_SPEC[k].desc} (所持 ×{furnCount(k)})
+            </div>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <span className="price">{fmtMoney(FURNITURE_SPEC[k].price)}</span>
+              <button disabled={money < FURNITURE_SPEC[k].price} onClick={() => buyFurniture(k)}>
+                買う
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

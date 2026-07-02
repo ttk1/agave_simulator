@@ -4,6 +4,7 @@ import {
   CIRCULATOR_DEFAULT_POS,
   DEVICE_SPEC,
   FERT_SPEC,
+  FURNITURE_SPEC,
   LED_SPEC,
   POT_SPEC,
   ROOM_COLS,
@@ -23,6 +24,8 @@ import type {
   CollectionEntry,
   DayReport,
   Devices,
+  Furniture,
+  FurnitureKind,
   Inventory,
   LedPower,
   Plant,
@@ -62,6 +65,8 @@ interface GameStore {
   /** 棚に置かれていない株 (作業台) */
   bench: string[];
   shelves: Shelf[];
+  /** 部屋に置かれた飾り家具 (見た目だけ) */
+  furniture: Furniture[];
   inventory: Inventory;
   devices: Devices;
   market: number;
@@ -82,6 +87,8 @@ interface GameStore {
   movingCirculator: boolean;
   sowTarget: SlotRef | "bench" | null;
   placingShelf: ShelfKind | null;
+  placingFurniture: FurnitureKind | null;
+  movingFurnitureId: string | null;
   showReport: boolean;
   showHelp: boolean;
   showSettings: boolean;
@@ -122,6 +129,14 @@ interface GameStore {
   /** サーキュレーターの設置マス選択の開始/解除 */
   startMoveCirculator: (b: boolean) => void;
   placeCirculator: (x: number, y: number) => void;
+  // 家具 (見た目だけ)
+  buyFurniture: (kind: FurnitureKind) => void;
+  setPlacingFurniture: (k: FurnitureKind | null) => void;
+  placeFurniture: (kind: FurnitureKind, x: number, y: number) => void;
+  startMoveFurniture: (id: string | null) => void;
+  moveFurniture: (id: string, x: number, y: number) => void;
+  rotateFurniture: (id: string) => void;
+  removeFurniture: (id: string) => void;
   rotateShelf: (shelfId: string) => void;
   installLed: (shelfId: string, level: number, power: LedPower) => void;
   uninstallLed: (shelfId: string, level: number) => void;
@@ -166,6 +181,7 @@ function initialInventory(): Inventory {
     liquidFert: 3,
     leds: { 1: 0, 2: 0, 3: 0 },
     shelves: { small: 0, large: 0 },
+    furniture: {},
   };
 }
 
@@ -178,6 +194,7 @@ function initialGame() {
     plants: {} as Record<string, Plant>,
     bench: [] as string[],
     shelves: initialShelves(),
+    furniture: [] as Furniture[],
     inventory: initialInventory(),
     devices: { heater: false, heaterOn: false, circulator: false, circulatorOn: false, aircon: false, airconOn: false },
     market: 1.0,
@@ -255,17 +272,28 @@ export const useGame = create<GameStore>()(
         movingCirculator: false,
         sowTarget: null,
         placingShelf: null,
+        placingFurniture: null,
+        movingFurnitureId: null,
         showReport: false,
         showHelp: true,
         showSettings: false,
         toast: null,
 
-        setView: (v) => set({ view: v, movingPlantId: null, movingShelfId: null, movingCirculator: false, placingShelf: null }),
+        setView: (v) =>
+          set({
+            view: v,
+            movingPlantId: null,
+            movingShelfId: null,
+            movingCirculator: false,
+            placingShelf: null,
+            placingFurniture: null,
+            movingFurnitureId: null,
+          }),
         openShelf: (id) => set({ view: "shelf", activeShelfId: id, selectedPlantId: null }),
         selectPlant: (id) => set({ selectedPlantId: id }),
         startMove: (plantId) => set({ movingPlantId: plantId }),
         setSowTarget: (t) => set({ sowTarget: t }),
-        setPlacingShelf: (k) => set({ placingShelf: k, movingCirculator: false }),
+        setPlacingShelf: (k) => set({ placingShelf: k, movingCirculator: false, placingFurniture: null, movingFurnitureId: null }),
         closeReport: () => set({ showReport: false }),
         setShowHelp: (b) => set({ showHelp: b, helpSeen: true }),
         setShowSettings: (b) => set({ showSettings: b }),
@@ -509,6 +537,7 @@ export const useGame = create<GameStore>()(
           if (s.inventory.shelves[kind] <= 0) return set({ toast: "棚の在庫が無い" });
           if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
           if (s.shelves.some((sh) => sh.x === x && sh.y === y)) return set({ toast: "そこには既に棚がある" });
+          if (s.furniture.some((f) => f.x === x && f.y === y)) return set({ toast: "そこには家具がある" });
           const spec = SHELF_SPEC[kind];
           const shelf: Shelf = {
             id: uid("shelf"),
@@ -554,7 +583,8 @@ export const useGame = create<GameStore>()(
           });
         },
 
-        startMoveShelf: (shelfId) => set({ movingShelfId: shelfId, placingShelf: null, movingCirculator: false }),
+        startMoveShelf: (shelfId) =>
+          set({ movingShelfId: shelfId, placingShelf: null, movingCirculator: false, placingFurniture: null, movingFurnitureId: null }),
 
         moveShelf: (shelfId, x, y) => {
           const s = get();
@@ -562,6 +592,7 @@ export const useGame = create<GameStore>()(
           if (s.shelves.some((sh) => sh.id !== shelfId && sh.x === x && sh.y === y)) {
             return set({ toast: "そこには既に棚がある" });
           }
+          if (s.furniture.some((f) => f.x === x && f.y === y)) return set({ toast: "そこには家具がある" });
           const shelf = s.shelves.find((sh) => sh.id === shelfId);
           if (!shelf) return;
           set({
@@ -571,7 +602,8 @@ export const useGame = create<GameStore>()(
           });
         },
 
-        startMoveCirculator: (b) => set({ movingCirculator: b, movingShelfId: null, placingShelf: null }),
+        startMoveCirculator: (b) =>
+          set({ movingCirculator: b, movingShelfId: null, placingShelf: null, placingFurniture: null, movingFurnitureId: null }),
 
         placeCirculator: (x, y) => {
           if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
@@ -586,6 +618,80 @@ export const useGame = create<GameStore>()(
           set((s) => ({
             shelves: s.shelves.map((sh) => (sh.id !== shelfId ? sh : { ...sh, rot: ((sh.rot ?? 0) + 1) % 4 })),
           }));
+        },
+
+        // ===== 家具 (見た目だけ) =====
+
+        buyFurniture: (kind) => {
+          const spec = FURNITURE_SPEC[kind];
+          if (!pay(spec.price, spec.name)) return;
+          set((s) => ({
+            inventory: {
+              ...s.inventory,
+              furniture: { ...s.inventory.furniture, [kind]: (s.inventory.furniture?.[kind] ?? 0) + 1 },
+            },
+            toast: `${spec.icon} ${spec.name} を購入した (部屋画面で設置)`,
+          }));
+        },
+
+        setPlacingFurniture: (k) =>
+          set({ placingFurniture: k, placingShelf: null, movingShelfId: null, movingCirculator: false, movingFurnitureId: null }),
+
+        placeFurniture: (kind, x, y) => {
+          const s = get();
+          if ((s.inventory.furniture?.[kind] ?? 0) <= 0) return set({ toast: "その家具の在庫が無い" });
+          if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
+          if (s.shelves.some((sh) => sh.x === x && sh.y === y)) return set({ toast: "そこには棚がある" });
+          if (s.furniture.some((f) => f.x === x && f.y === y)) return set({ toast: "そこには既に家具がある" });
+          const spec = FURNITURE_SPEC[kind];
+          set({
+            furniture: [...s.furniture, { id: uid("furn"), kind, x, y, rot: 0 }],
+            inventory: {
+              ...s.inventory,
+              furniture: { ...s.inventory.furniture, [kind]: (s.inventory.furniture?.[kind] ?? 0) - 1 },
+            },
+            placingFurniture: null,
+            toast: `${spec.icon} ${spec.name} を設置した`,
+          });
+        },
+
+        startMoveFurniture: (id) =>
+          set({ movingFurnitureId: id, placingShelf: null, movingShelfId: null, movingCirculator: false, placingFurniture: null }),
+
+        moveFurniture: (id, x, y) => {
+          const s = get();
+          if (x < 0 || y < 0 || x >= ROOM_COLS || y >= ROOM_ROWS) return;
+          if (s.shelves.some((sh) => sh.x === x && sh.y === y)) return set({ toast: "そこには棚がある" });
+          if (s.furniture.some((f) => f.id !== id && f.x === x && f.y === y)) {
+            return set({ toast: "そこには既に家具がある" });
+          }
+          const furn = s.furniture.find((f) => f.id === id);
+          if (!furn) return;
+          set({
+            furniture: s.furniture.map((f) => (f.id !== id ? f : { ...f, x, y })),
+            movingFurnitureId: null,
+            toast: `↔️ ${FURNITURE_SPEC[furn.kind].name} を移動した`,
+          });
+        },
+
+        rotateFurniture: (id) => {
+          set((s) => ({
+            furniture: s.furniture.map((f) => (f.id !== id ? f : { ...f, rot: ((f.rot ?? 0) + 1) % 4 })),
+          }));
+        },
+
+        removeFurniture: (id) => {
+          const s = get();
+          const furn = s.furniture.find((f) => f.id === id);
+          if (!furn) return;
+          set({
+            furniture: s.furniture.filter((f) => f.id !== id),
+            inventory: {
+              ...s.inventory,
+              furniture: { ...s.inventory.furniture, [furn.kind]: (s.inventory.furniture?.[furn.kind] ?? 0) + 1 },
+            },
+            toast: `${FURNITURE_SPEC[furn.kind].name} を片付けた (在庫に戻した)`,
+          });
         },
 
         installLed: (shelfId, level, power) => {
@@ -755,6 +861,8 @@ export const useGame = create<GameStore>()(
             movingShelfId: null,
             movingCirculator: false,
             placingShelf: null,
+            placingFurniture: null,
+            movingFurnitureId: null,
             showHelp: true,
             showReport: false,
           });
@@ -773,6 +881,7 @@ export const useGame = create<GameStore>()(
         plants: s.plants,
         bench: s.bench,
         shelves: s.shelves,
+        furniture: s.furniture,
         inventory: s.inventory,
         devices: s.devices,
         market: s.market,

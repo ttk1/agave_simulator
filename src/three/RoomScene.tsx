@@ -4,7 +4,8 @@ import { Suspense, useMemo, useState } from "react";
 import * as THREE from "three";
 import { CELL, ROOM_COLS, ROOM_ROWS, WALL_H, WINDOW_X, WINDOW_Y_RANGE } from "../game/constants";
 import { circulatorPos, sunStrength } from "../game/environment";
-import type { Devices, Plant, Shelf } from "../game/types";
+import type { Devices, Furniture, Plant, Shelf } from "../game/types";
+import { FurnitureModel } from "./FurnitureModel";
 import { ShelfModel } from "./ShelfModel";
 import { SunPool, WindowUnit } from "./WindowUnit";
 
@@ -127,11 +128,12 @@ interface Props {
   plants: Record<string, Plant>;
   day: number;
   devices: Devices;
+  furniture: Furniture[];
   onShelfClick: (shelfId: string) => void;
 }
 
 /** 部屋全体の 3D ビュー (鑑賞モード)。棚クリックで棚画面へ */
-export function RoomScene({ shelves, plants, day, devices, onShelfClick }: Props) {
+export function RoomScene({ shelves, plants, day, devices, furniture, onShelfClick }: Props) {
   const roomW = ROOM_COLS * CELL;
   const roomD = ROOM_ROWS * CELL;
   const wallZ = -roomD / 2; // 北壁 (窓側)
@@ -227,6 +229,16 @@ export function RoomScene({ shelves, plants, day, devices, onShelfClick }: Props
         {devices.circulator && (
           <CirculatorModel x={circulatorPos(devices).x} y={circulatorPos(devices).y} on={devices.circulatorOn} />
         )}
+
+        {/* 飾り家具 */}
+        {furniture.map((f) => {
+          const [px, pz] = cellPos(f.x, f.y);
+          return (
+            <group key={f.id} position={[px, 0, pz]} rotation={[0, (-(f.rot ?? 0) * Math.PI) / 2, 0]}>
+              <FurnitureModel kind={f.kind} />
+            </group>
+          );
+        })}
 
         <OrbitControls
           target={[0, 1.6, 0]}
