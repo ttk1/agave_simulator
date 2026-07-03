@@ -145,7 +145,21 @@ export interface Devices {
 }
 
 /** 飾り家具の種類 (見た目だけで育成には影響しない) */
-export type FurnitureKind = "bed" | "tableSet" | "closet" | "desk" | "bookshelf" | "sofa" | "lamp";
+export type FurnitureKind =
+  | "bed"
+  | "tableSet"
+  | "closet"
+  | "desk"
+  | "bookshelf"
+  | "sofa"
+  | "lamp"
+  // ここから高額ネタグッズ (儲かったときの散財先)
+  | "plushAgave"
+  | "neonSign"
+  | "manekiNeko"
+  | "trophy"
+  | "vending"
+  | "goldAgave";
 
 /** 部屋に置かれた家具 1 つ */
 export interface Furniture {

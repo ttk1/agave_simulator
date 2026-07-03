@@ -303,6 +303,324 @@ function Lamp() {
   );
 }
 
+// ===== ここから高額ネタグッズ =====
+
+function Gold() {
+  return <meshStandardMaterial color="#e7bd45" metalness={0.8} roughness={0.28} />;
+}
+
+const PLUSH_GREEN = "#7fa36b";
+
+function PlushAgave() {
+  const leaves = Array.from({ length: 8 }, (_, i) => {
+    const az = (i / 8) * Math.PI * 2 + 0.3;
+    const tilt = 0.95;
+    return { az, tilt, len: 1.35, key: i };
+  });
+  return (
+    <group>
+      {/* 胴体 (くたっと座った感じ) */}
+      <mesh position={[0, 0.85, 0]} scale={[1, 0.82, 1]} castShadow>
+        <sphereGeometry args={[0.95, 20, 16]} />
+        <meshStandardMaterial color={PLUSH_GREEN} roughness={1} />
+      </mesh>
+      {/* 外周のふとした葉 */}
+      {leaves.map(({ az, tilt, len, key }) => (
+        <group key={key} rotation={[0, az, 0]}>
+          <mesh
+            position={[Math.sin(tilt) * len * 0.55, 0.55 + Math.cos(tilt) * len * 0.4, 0]}
+            rotation={[0, 0, -tilt]}
+            castShadow
+          >
+            <coneGeometry args={[0.34, len, 10]} />
+            <meshStandardMaterial color={key % 2 ? PLUSH_GREEN : "#749962"} roughness={1} />
+          </mesh>
+        </group>
+      ))}
+      {/* 頭頂の葉 */}
+      {[-0.35, 0, 0.35].map((sx, i) => (
+        <mesh key={i} position={[sx, 1.85, 0]} rotation={[0, 0, -sx * 0.8]} castShadow>
+          <coneGeometry args={[0.26, 1.0, 10]} />
+          <meshStandardMaterial color={i === 1 ? "#8aae76" : PLUSH_GREEN} roughness={1} />
+        </mesh>
+      ))}
+      {/* 顔 (ボタンの目と笑った口) */}
+      {[-0.28, 0.28].map((sx) => (
+        <mesh key={sx} position={[sx, 1.05, 0.82]}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshStandardMaterial color="#22201c" roughness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.85, 0.86]} rotation={[0.2, 0, Math.PI]}>
+        <torusGeometry args={[0.14, 0.025, 8, 12, Math.PI]} />
+        <meshStandardMaterial color="#22201c" roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+function NeonSign() {
+  // 台座つきの看板。アガベのシルエットがネオンで光る
+  const fan = [-0.9, -0.5, 0, 0.5, 0.9];
+  return (
+    <group>
+      {[-0.9, 0.9].map((sx) => (
+        <mesh key={sx} position={[sx, 0.35, 0]}>
+          <boxGeometry args={[0.18, 0.7, 0.7]} />
+          <meshStandardMaterial color="#2a2f36" roughness={0.6} />
+        </mesh>
+      ))}
+      <mesh position={[0, 1.85, 0]} castShadow>
+        <boxGeometry args={[2.9, 2.3, 0.16]} />
+        <meshStandardMaterial color="#171b21" roughness={0.7} />
+      </mesh>
+      {/* ネオン枠 (ピンク) */}
+      {([[0, 2.85, 2.7, 0.06], [0, 0.85, 2.7, 0.06]] as const).map(([x, y, w, h], i) => (
+        <mesh key={`h${i}`} position={[x, y, 0.1]}>
+          <boxGeometry args={[w, h, 0.05]} />
+          <meshStandardMaterial color="#ff5fd0" emissive="#ff5fd0" emissiveIntensity={1.6} toneMapped={false} />
+        </mesh>
+      ))}
+      {[-1.32, 1.32].map((sx) => (
+        <mesh key={`v${sx}`} position={[sx, 1.85, 0.1]}>
+          <boxGeometry args={[0.06, 2.06, 0.05]} />
+          <meshStandardMaterial color="#ff5fd0" emissive="#ff5fd0" emissiveIntensity={1.6} toneMapped={false} />
+        </mesh>
+      ))}
+      {/* ネオンのアガベ (扇状に光る葉) */}
+      {fan.map((a, i) => (
+        <mesh
+          key={i}
+          position={[Math.sin(a) * 0.42, 1.55 + Math.cos(a) * 0.45, 0.12]}
+          rotation={[0, 0, -a]}
+        >
+          <coneGeometry args={[0.09, 1.0 - Math.abs(a) * 0.25, 6]} />
+          <meshStandardMaterial color="#48ffa0" emissive="#48ffa0" emissiveIntensity={1.8} toneMapped={false} />
+        </mesh>
+      ))}
+      <pointLight position={[0, 1.9, 1.2]} intensity={1.0} distance={6.5} decay={1.9} color="#7dffbe" />
+    </group>
+  );
+}
+
+function ManekiNeko() {
+  return (
+    <group>
+      {/* 座布団 */}
+      <mesh position={[0, 0.09, 0]} castShadow>
+        <cylinderGeometry args={[0.85, 0.95, 0.18, 16]} />
+        <meshStandardMaterial color="#a33638" roughness={0.9} />
+      </mesh>
+      {/* 胴・頭 */}
+      <mesh position={[0, 0.95, 0]} scale={[0.78, 0.92, 0.72]} castShadow>
+        <sphereGeometry args={[1.0, 18, 14]} />
+        <Gold />
+      </mesh>
+      <mesh position={[0, 1.95, 0]} scale={[1, 0.9, 0.95]} castShadow>
+        <sphereGeometry args={[0.56, 18, 14]} />
+        <Gold />
+      </mesh>
+      {/* 耳 */}
+      {[-0.32, 0.32].map((sx) => (
+        <mesh key={sx} position={[sx, 2.42, 0]} rotation={[0, 0, -sx * 0.9]}>
+          <coneGeometry args={[0.14, 0.3, 8]} />
+          <Gold />
+        </mesh>
+      ))}
+      {/* 招く右手 (上げた前脚) */}
+      <mesh position={[0.58, 1.55, 0.12]} rotation={[0, 0, -0.5]}>
+        <cylinderGeometry args={[0.13, 0.16, 0.75, 10]} />
+        <Gold />
+      </mesh>
+      <mesh position={[0.76, 1.95, 0.12]}>
+        <sphereGeometry args={[0.19, 12, 10]} />
+        <Gold />
+      </mesh>
+      {/* 反対の前脚 */}
+      <mesh position={[-0.45, 0.62, 0.42]}>
+        <sphereGeometry args={[0.2, 12, 10]} />
+        <Gold />
+      </mesh>
+      {/* 首輪と鈴 */}
+      <mesh position={[0, 1.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.42, 0.05, 8, 20]} />
+        <meshStandardMaterial color="#a33638" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 1.36, 0.4]}>
+        <sphereGeometry args={[0.09, 10, 8]} />
+        <meshStandardMaterial color="#fff1b8" metalness={0.6} roughness={0.3} />
+      </mesh>
+      {/* 小判 */}
+      <mesh position={[0, 0.75, 0.68]} rotation={[0.15, 0, 0]} scale={[1, 1.4, 1]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.08, 16]} />
+        <Gold />
+      </mesh>
+      {/* 目 (閉じたにっこり目) */}
+      {[-0.2, 0.2].map((sx) => (
+        <mesh key={sx} position={[sx, 2.05, 0.5]} rotation={[0.35, 0, Math.PI]}>
+          <torusGeometry args={[0.07, 0.015, 6, 10, Math.PI]} />
+          <meshStandardMaterial color="#22201c" roughness={0.4} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Trophy() {
+  return (
+    <group>
+      {/* 台座 */}
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <boxGeometry args={[1.5, 1.0, 1.5]} />
+        <Wood color={WOOD_DARK} />
+      </mesh>
+      <mesh position={[0, 1.02, 0]}>
+        <boxGeometry args={[1.6, 0.06, 1.6]} />
+        <Wood />
+      </mesh>
+      {/* 金色の銘板 */}
+      <mesh position={[0, 0.62, 0.76]}>
+        <boxGeometry args={[0.7, 0.24, 0.02]} />
+        <Gold />
+      </mesh>
+      {/* トロフィー本体 */}
+      <group position={[0, 1.05, 0]}>
+        <mesh position={[0, 0.12, 0]}>
+          <cylinderGeometry args={[0.24, 0.3, 0.22, 12]} />
+          <meshStandardMaterial color="#2f2a24" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.38, 0]}>
+          <cylinderGeometry args={[0.05, 0.07, 0.34, 10]} />
+          <Gold />
+        </mesh>
+        <mesh position={[0, 0.75, 0]} castShadow>
+          <cylinderGeometry args={[0.34, 0.14, 0.52, 14]} />
+          <Gold />
+        </mesh>
+        {[-0.36, 0.36].map((sx) => (
+          <mesh key={sx} position={[sx, 0.78, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[0.14, 0.03, 8, 14]} />
+            <Gold />
+          </mesh>
+        ))}
+      </group>
+      {/* ガラスケース (枠つき) */}
+      <mesh position={[0, 1.95, 0]}>
+        <boxGeometry args={[1.3, 1.8, 1.3]} />
+        <meshStandardMaterial color="#cfe4ef" transparent opacity={0.16} roughness={0.05} metalness={0.1} />
+      </mesh>
+      {[[-0.63, -0.63], [-0.63, 0.63], [0.63, -0.63], [0.63, 0.63]].map(([sx, sz], i) => (
+        <mesh key={i} position={[sx, 1.95, sz]}>
+          <boxGeometry args={[0.05, 1.8, 0.05]} />
+          <meshStandardMaterial color="#3a3f46" roughness={0.5} />
+        </mesh>
+      ))}
+      <mesh position={[0, 2.87, 0]}>
+        <boxGeometry args={[1.36, 0.06, 1.36]} />
+        <meshStandardMaterial color="#3a3f46" roughness={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+const VENDING_ITEMS = ["#e8c252", "#5fb2e0", "#7fbf72", "#d97fa8", "#c9713f", "#8f7fd9", "#5ec9b2", "#e0e0d5"];
+
+function Vending() {
+  return (
+    <group scale={1.25}>
+      <mesh position={[0, 1.65, 0]} castShadow>
+        <boxGeometry args={[1.8, 3.3, 1.3]} />
+        <meshStandardMaterial color="#c24450" roughness={0.5} />
+      </mesh>
+      {/* 上部の光る看板 */}
+      <mesh position={[0, 3.05, 0.66]}>
+        <planeGeometry args={[1.6, 0.34]} />
+        <meshStandardMaterial color="#bff0dc" emissive="#8fe8c0" emissiveIntensity={1.3} toneMapped={false} />
+      </mesh>
+      {/* ショーケース窓 */}
+      <mesh position={[-0.15, 2.0, 0.66]}>
+        <planeGeometry args={[1.15, 1.55]} />
+        <meshStandardMaterial color="#233039" emissive="#31465e" emissiveIntensity={0.5} />
+      </mesh>
+      {/* 商品サンプル (3 段 × 4) */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const row = Math.floor(i / 4);
+        const col = i % 4;
+        return (
+          <mesh key={i} position={[-0.57 + col * 0.28, 2.5 - row * 0.5, 0.68]}>
+            <boxGeometry args={[0.2, 0.28, 0.06]} />
+            <meshStandardMaterial color={VENDING_ITEMS[(i * 5 + row) % VENDING_ITEMS.length]} roughness={0.6} />
+          </mesh>
+        );
+      })}
+      {/* コイン投入口・ボタン列 */}
+      <mesh position={[0.65, 2.2, 0.66]}>
+        <boxGeometry args={[0.24, 0.5, 0.04]} />
+        <meshStandardMaterial color="#3a3f46" roughness={0.4} />
+      </mesh>
+      {Array.from({ length: 3 }, (_, i) => (
+        <mesh key={i} position={[0.65, 1.6 - i * 0.22, 0.67]}>
+          <boxGeometry args={[0.16, 0.1, 0.03]} />
+          <meshStandardMaterial color="#e05555" emissive="#e05555" emissiveIntensity={0.7} />
+        </mesh>
+      ))}
+      {/* 取り出し口 */}
+      <mesh position={[-0.15, 0.55, 0.66]}>
+        <boxGeometry args={[1.0, 0.45, 0.06]} />
+        <meshStandardMaterial color="#26211f" roughness={0.7} />
+      </mesh>
+      <pointLight position={[0, 2.1, 1.3]} intensity={0.7} distance={4} decay={2} color="#bfe8d8" />
+    </group>
+  );
+}
+
+function GoldAgave() {
+  const leaves = Array.from({ length: 18 }, (_, i) => {
+    const az = i * 2.39996; // 黄金角
+    const t = i / 18; // 0 = 外葉, 1 = 中心
+    return {
+      az,
+      tilt: 1.25 - t * 1.05,
+      len: 1.5 - t * 0.55,
+      key: i,
+    };
+  });
+  return (
+    <group>
+      {/* 大理石風の台座 */}
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <boxGeometry args={[1.9, 1.0, 1.9]} />
+        <meshStandardMaterial color="#2d3138" roughness={0.25} metalness={0.1} />
+      </mesh>
+      <mesh position={[0, 1.03, 0]}>
+        <boxGeometry args={[2.1, 0.1, 2.1]} />
+        <meshStandardMaterial color="#43484f" roughness={0.3} />
+      </mesh>
+      {/* 黄金のロゼット */}
+      <group position={[0, 1.12, 0]}>
+        {leaves.map(({ az, tilt, len, key }) => (
+          <group key={key} rotation={[0, az, 0]}>
+            <mesh
+              position={[Math.sin(tilt) * len * 0.48, Math.cos(tilt) * len * 0.48 + 0.08, 0]}
+              rotation={[0, 0, -tilt]}
+              castShadow
+            >
+              <coneGeometry args={[0.17, len, 8]} />
+              <Gold />
+            </mesh>
+          </group>
+        ))}
+        <mesh position={[0, 0.3, 0]}>
+          <sphereGeometry args={[0.34, 14, 12]} />
+          <Gold />
+        </mesh>
+      </group>
+      {/* 展示ライト */}
+      <pointLight position={[0, 3.4, 1.0]} intensity={0.9} distance={6} decay={2} color="#ffe1a0" />
+    </group>
+  );
+}
+
 export function FurnitureModel({ kind }: { kind: FurnitureKind }) {
   switch (kind) {
     case "bed":
@@ -319,5 +637,17 @@ export function FurnitureModel({ kind }: { kind: FurnitureKind }) {
       return <Sofa />;
     case "lamp":
       return <Lamp />;
+    case "plushAgave":
+      return <PlushAgave />;
+    case "neonSign":
+      return <NeonSign />;
+    case "manekiNeko":
+      return <ManekiNeko />;
+    case "trophy":
+      return <Trophy />;
+    case "vending":
+      return <Vending />;
+    case "goldAgave":
+      return <GoldAgave />;
   }
 }

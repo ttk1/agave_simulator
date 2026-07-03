@@ -99,6 +99,13 @@ export const FURNITURE_SPEC: Record<FurnitureKind, { name: string; icon: string;
   bookshelf: { name: "本棚", icon: "📚", price: 8000, desc: "多肉植物の図鑑や園芸書がぎっしり" },
   sofa: { name: "ソファ", icon: "🛋️", price: 22000, desc: "育成をひと休み。座って眺める株は格別" },
   lamp: { name: "フロアランプ", icon: "🕯️", price: 6000, desc: "夜の部屋をやわらかく照らす (株の光量には寄与しない)" },
+  // ---- 高額ネタグッズ (儲かったときの散財先。もちろん育成には影響しない) ----
+  plushAgave: { name: "特大アガベぬいぐるみ", icon: "🧸", price: 66000, desc: "抱きしめられるアガベ。棘はふわふわなので安全" },
+  neonSign: { name: "ネオンサイン", icon: "🌵", price: 88000, desc: "夜の部屋が一気にプラントショップの風格に" },
+  manekiNeko: { name: "黄金の招き猫", icon: "🐱", price: 128000, desc: "商売繁盛を祈願。なお相場には一切影響しない" },
+  trophy: { name: "品評会トロフィー", icon: "🏆", price: 250000, desc: "ガラスケース入り。どの品評会かは聞かないでほしい" },
+  vending: { name: "アガベグッズ自販機", icon: "🥤", price: 398000, desc: "本物の自販機を部屋に。中身は全部売り切れ" },
+  goldAgave: { name: "黄金のアガベ像", icon: "👑", price: 980000, desc: "純金風仕上げの実物大アガベ。究極の自己満足" },
 };
 
 // ===== 資材 =====
