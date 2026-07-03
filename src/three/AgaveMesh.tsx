@@ -8,6 +8,7 @@ import {
   plantRadius,
   spineColorOf,
   VARIE_COLOR,
+  visualOf,
 } from "./agaveGeometry";
 
 const GOLDEN_ANGLE = (137.508 * Math.PI) / 180;
@@ -35,29 +36,34 @@ export function AgaveMesh({ plant, maxRadius = 0, showPot = true }: Props) {
     const g = plant.genetics;
     const dead = plant.stage === "dead";
     const spineColor = spineColorOf(plant.speciesId, g);
+    const vis = visualOf(plant.speciesId);
     const n = plant.leaves.length;
 
     const leafInstances: LeafInstance[] = plant.leaves.map((leaf, i) => {
       const rank = n <= 1 ? 1 : (i + 1) / n; // 1 = 最新 (中心)
-      const length = leaf.len * plant.leafScale * 0.85;
-      const width = leaf.width * plant.leafScale * 0.34;
-      const thick = leaf.thick * plant.leafScale * 0.085;
-      // 古い葉ほど開き、徒長葉は垂れる
+      const length = leaf.len * plant.leafScale * 0.85 * vis.lengthMul;
+      const width = leaf.width * plant.leafScale * 0.34 * vis.widthMul;
+      const thick = leaf.thick * plant.leafScale * 0.085 * vis.thickMul;
+      // 古い葉ほど開き、徒長葉は垂れる。硬い品種は垂れにくく、内巻き品種は反り込む
       const baseAngle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(72, 14, Math.pow(rank, 0.8)));
-      const droop = THREE.MathUtils.degToRad(18 + leaf.etiole * 95 + (1 - g.compact) * 18);
+      const droop =
+        THREE.MathUtils.degToRad(18 + leaf.etiole * 95 * (1 - vis.stiffness) + (1 - g.compact) * 18) +
+        vis.curve;
       const geometry = buildLeafGeometry({
         length,
         width,
         thick,
         droop,
         baseAngle,
-        leafColor: dead ? new THREE.Color("#8a7a55") : leafColorOf(g, leaf),
+        leafColor: dead ? new THREE.Color("#8a7a55") : leafColorOf(g, leaf, vis),
         edgeColor: EDGE_COLOR,
         spineColor,
         toothSize: g.spine * 0.038 * plant.leafScale * (0.6 + leaf.thick * 0.5),
         variegation: dead ? 0 : g.variegation,
         vtype: g.vtype,
         varieColor: VARIE_COLOR,
+        visual: vis,
+        phase: leaf.hueShift * 40 + i * 1.73,
       });
       return {
         geometry,
@@ -81,7 +87,7 @@ export function AgaveMesh({ plant, maxRadius = 0, showPot = true }: Props) {
       color: new THREE.Color("#b09a6a"),
     });
 
-    const r = plantRadius(plant.leafScale, plant.leaves);
+    const r = plantRadius(plant.leafScale, plant.leaves, vis.lengthMul);
     const scale = maxRadius > 0 && r > maxRadius ? maxRadius / r : 1;
 
     const potR = POT_RADIUS[plant.potSize];
@@ -138,7 +144,7 @@ export function AgaveMesh({ plant, maxRadius = 0, showPot = true }: Props) {
                 <coneGeometry args={[0.07 * plant.leafScale, 0.34 * plant.leafScale, 7]} />
                 <meshStandardMaterial color={leafColorOf(plant.genetics, {
                   len: 1, width: 1, thick: 1, etiole: 0, hueShift: 0, born: 0,
-                }).offsetHSL(0, 0.02, 0.06)} roughness={0.6} />
+                }, visualOf(plant.speciesId)).offsetHSL(0, 0.02, 0.06)} roughness={0.6} />
               </mesh>
             )}
           </>

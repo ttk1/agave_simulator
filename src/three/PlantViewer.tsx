@@ -2,13 +2,13 @@ import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useMemo } from "react";
 import type { Plant } from "../game/types";
-import { plantRadius } from "./agaveGeometry";
+import { plantRadius, visualOf } from "./agaveGeometry";
 import { AgaveMesh } from "./AgaveMesh";
 
 /** 株 1 鉢をぐるぐる眺められるフォトビューア */
 export function PlantViewer({ plant }: { plant: Plant }) {
   const dist = useMemo(() => {
-    const r = Math.max(0.6, plantRadius(plant.leafScale, plant.leaves));
+    const r = Math.max(0.6, plantRadius(plant.leafScale, plant.leaves, visualOf(plant.speciesId).lengthMul));
     return r * 2.6 + 0.8;
   }, [plant]);
 
