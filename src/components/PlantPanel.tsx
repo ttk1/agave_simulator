@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { POT_SPEC, SOIL_SPEC, SPECIES_MAP, TIER_LABEL } from "../game/constants";
+import { DOGIRI, POT_SPEC, SOIL_SPEC, SPECIES_MAP, TIER_LABEL } from "../game/constants";
 import { fmtMoney, salePrice } from "../game/economy";
 import { lightLabel, roomTemp, slotLight } from "../game/environment";
 import { formQuality, qualityStars } from "../game/genetics";
@@ -38,6 +38,8 @@ export function PlantPanel() {
   const sellPlant = useGame((s) => s.sellPlant);
   const discardPlant = useGame((s) => s.discardPlant);
   const curePest = useGame((s) => s.curePest);
+  const dogiriPlant = useGame((s) => s.dogiriPlant);
+  const harvestPups = useGame((s) => s.harvestPups);
   const startMove = useGame((s) => s.startMove);
   const setView = useGame((s) => s.setView);
   const openShelf = useGame((s) => s.openShelf);
@@ -46,6 +48,7 @@ export function PlantPanel() {
   const [repotPot, setRepotPot] = useState<PotSize>(2);
   const [repotSoil, setRepotSoil] = useState<SoilType>("akadama");
   const [repotFert, setRepotFert] = useState(true);
+  const [dogiriOpen, setDogiriOpen] = useState(false);
 
   const plant = selectedPlantId ? plants[selectedPlantId] : null;
 
@@ -91,7 +94,11 @@ export function PlantPanel() {
                   })`
                 : plant.stage === "seedling"
                   ? "🌱 育苗中"
-                  : "🪴 育成株"}
+                  : plant.dogiri
+                    ? plant.dogiri.sproutLeft > 0
+                      ? `🔪 胴切り台 (芽吹きまで約${realDays(plant.dogiri.sproutLeft)}日)`
+                      : `🌱 芽が ${plant.dogiri.buds} 個吹いた！`
+                    : "🪴 育成株"}
             {plant.pest && " 🐛害虫!"}
             {plant.stressDays > 0 && " 😮‍💨植替ストレス"}
           </span>
@@ -166,7 +173,45 @@ export function PlantPanel() {
               ↔️ 移動
             </button>
             <button onClick={() => setRepotOpen(!repotOpen)}>🪴 植え替え</button>
+            {plant.stage === "plant" && !plant.dogiri && (
+              <button onClick={() => setDogiriOpen(!dogiriOpen)}>🔪 胴切り</button>
+            )}
           </div>
+
+          {plant.dogiri && plant.dogiri.buds > 0 && (
+            <div className="subpanel">
+              <div style={{ marginBottom: "0.45rem" }}>
+                🌱 芽が <strong>{plant.dogiri.buds} 個</strong> 吹いている！ 外すと親と同じ個体値の子株になる
+              </div>
+              <button className="primary" onClick={() => harvestPups(plant.id)}>
+                子株を外す ({plant.dogiri.buds}個 → 作業台へ)
+              </button>
+            </div>
+          )}
+
+          {dogiriOpen && !plant.dogiri && (
+            <div className="subpanel">
+              <div style={{ marginBottom: "0.45rem" }}>
+                🔪 <strong>胴切りチャレンジ</strong>: 成長点を切って台から子株 (親のクローン) を吹かせる。
+                何個取れるかは運しだい — 健康で大きく育った株ほど期待大。失敗 (0個) もある。
+              </div>
+              <ul className="muted" style={{ margin: "0 0 0.45rem", paddingLeft: "1.2rem", lineHeight: 1.6 }}>
+                <li>葉 {DOGIRI.minLeaves} 枚以上・健康 {DOGIRI.minHealth} 以上で実行可能</li>
+                <li>芽吹きまで約{realDays(DOGIRI.sproutDays)}日。{DOGIRI.minTemp}°C 以上と水分が必要 (棚で管理しよう)</li>
+                <li>切った株は芽を全部外すまで成長・販売できない</li>
+              </ul>
+              <button
+                className="danger"
+                disabled={plant.leaves.length < DOGIRI.minLeaves || plant.health < DOGIRI.minHealth}
+                onClick={() => {
+                  dogiriPlant(plant.id);
+                  setDogiriOpen(false);
+                }}
+              >
+                切る (葉{plant.leaves.length}枚 / 健康{Math.round(plant.health)})
+              </button>
+            </div>
+          )}
 
           {repotOpen && (
             <div className="subpanel">
@@ -222,7 +267,9 @@ export function PlantPanel() {
             </button>
           </div>
         ) : (
-          <div className="muted">葉が 4 枚以上の育成株になると販売できる</div>
+          <div className="muted">
+            {plant.dogiri ? "胴切りチャレンジ中は販売できない" : "葉が 4 枚以上の育成株になると販売できる"}
+          </div>
         )}
         <div style={{ marginTop: "0.6rem" }}>
           <button className="danger" onClick={() => discardPlant(plant.id)}>

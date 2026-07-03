@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import {
   CIRCULATOR_DEFAULT_POS,
   DEVICE_SPEC,
+  DOGIRI,
   FERT_SPEC,
   FURNITURE_SPEC,
   LED_SPEC,
@@ -119,6 +120,10 @@ interface GameStore {
   sellPlant: (id: string) => void;
   discardPlant: (id: string) => void;
   curePest: (id: string) => void;
+  /** 胴切りチャレンジ: 成長点を切って子株を吹かせる */
+  dogiriPlant: (id: string) => void;
+  /** 胴切り台から子株を外して作業台へ (空きの分だけ) */
+  harvestPups: (id: string) => void;
   sow: (speciesId: string, target: SlotRef | "bench", pot: PotSize, soil: SoilType, baseFert: boolean) => void;
   movePlant: (id: string, target: SlotRef | "bench") => void;
   placeShelf: (kind: ShelfKind, x: number, y: number) => void;
@@ -489,6 +494,81 @@ export const useGame = create<GameStore>()(
             plants: { ...st.plants, [id]: { ...p, pest: false } },
             toast: `🧴 ${p.name} の害虫を駆除した`,
           }));
+        },
+
+        dogiriPlant: (id) => {
+          const s = get();
+          const p = s.plants[id];
+          if (!p || p.stage !== "plant") return;
+          if (p.dogiri) return set({ toast: "すでに胴切り済み" });
+          if (p.leaves.length < DOGIRI.minLeaves) {
+            return set({ toast: `葉が ${DOGIRI.minLeaves} 枚以上の株でないと胴切りできない` });
+          }
+          if (p.health < DOGIRI.minHealth) {
+            return set({ toast: "弱っている株の胴切りは危険。回復させてから" });
+          }
+          // 下葉を残して上部を切り落とす (leaves は古い順なので先頭側を残す)
+          const keep = Math.max(4, Math.floor(p.leaves.length * DOGIRI.keepLeafRatio));
+          const days = Math.ceil(DOGIRI.sproutDays / s.settings.growthSpeed);
+          set((st) => ({
+            plants: {
+              ...st.plants,
+              [id]: {
+                ...p,
+                leaves: p.leaves.slice(0, keep),
+                health: Math.max(1, p.health - DOGIRI.healthCost),
+                stressDays: p.stressDays + DOGIRI.stressDays,
+                growthProgress: 0,
+                dogiri: { sproutLeft: DOGIRI.sproutDays, buds: 0 },
+              },
+            },
+            toast: `🔪 ${p.name} を胴切りした！ 芽吹きまで約${days}日、水と温度の管理を続けよう`,
+          }));
+        },
+
+        harvestPups: (id) => {
+          const s = get();
+          const p = s.plants[id];
+          if (!p || !p.dogiri || p.dogiri.buds <= 0) return;
+          const sp = SPECIES_MAP[p.speciesId];
+          const space = 8 - s.bench.length;
+          if (space <= 0) return set({ toast: "作業台がいっぱい。先に棚へ置こう" });
+          const take = Math.min(space, p.dogiri.buds);
+          const newPlants: Record<string, Plant> = {};
+          const newIds: string[] = [];
+          let serial = s.serials[p.speciesId] ?? 0;
+          for (let i = 0; i < take; i++) {
+            serial += 1;
+            // 親のクローン遺伝子を引き継ぐ (胴切りの醍醐味)
+            const pup = makePlant({
+              sp,
+              day: s.day,
+              serial,
+              asPup: true,
+              potSize: 1,
+              soil: "akadama",
+              baseFert: false,
+              genetics: { ...p.genetics },
+            });
+            pup.leafScale = 0.4;
+            newPlants[pup.id] = pup;
+            newIds.push(pup.id);
+          }
+          const budsLeft = p.dogiri.buds - take;
+          set({
+            plants: {
+              ...s.plants,
+              ...newPlants,
+              // 全部外したら台は通常成長に復帰
+              [id]: { ...p, dogiri: budsLeft > 0 ? { sproutLeft: 0, buds: budsLeft } : undefined },
+            },
+            bench: [...s.bench, ...newIds],
+            serials: { ...s.serials, [p.speciesId]: serial },
+            toast:
+              budsLeft > 0
+                ? `🌱 子株を ${take} 個外して作業台へ (残り${budsLeft}個は作業台を空けてから)`
+                : `🌱 子株を ${take} 個外して作業台へ！ 台はこれから回復する`,
+          });
         },
 
         sow: (speciesId, target, pot, soil, baseFert) => {

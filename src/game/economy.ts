@@ -5,6 +5,8 @@ import type { Plant } from "./types";
 /** 株の現在の販売見込み価格 (market 補正前) */
 export function rawSalePrice(p: Plant): number {
   if (p.stage !== "plant" || p.leaves.length < 4) return 0;
+  // 胴切りチャレンジ中 (芽吹き待ち・収穫待ち) は売り物にならない
+  if (p.dogiri) return 0;
   const sp = SPECIES_MAP[p.speciesId];
   const n = p.leaves.length;
   // サイズ: 葉数とスケールで増える

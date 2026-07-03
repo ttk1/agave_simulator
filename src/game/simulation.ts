@@ -1,4 +1,4 @@
-import { DEVICE_SPEC, LED_SPEC, PEST_SPREAD, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "./constants";
+import { DEVICE_SPEC, DOGIRI, LED_SPEC, PEST_SPREAD, POT_SPEC, SOIL_SPEC, SPECIES_MAP } from "./constants";
 import { airconCost, airflowAt, roomHumidity, roomTemp, slotLight } from "./environment";
 import { growLeaf } from "./genetics";
 import type { Devices, Plant, Shelf } from "./types";
@@ -128,6 +128,29 @@ export function tickDay(
       continue;
     }
 
+    // --- 胴切り: 芽吹きの進行 (温度と水分があるときだけ進む) ---
+    if (p.dogiri && p.dogiri.sproutLeft > 0) {
+      if (temp >= DOGIRI.minTemp && p.moisture > 0.05) {
+        p.dogiri.sproutLeft = Math.max(0, p.dogiri.sproutLeft - growthSpeed);
+        if (p.dogiri.sproutLeft === 0) {
+          // 何個吹くかは運しだい。株の充実度 (健康・サイズ・成長遺伝子) で期待値が上がる
+          const expected =
+            0.8 +
+            p.genetics.growth * 1.8 +
+            Math.max(0, p.leafScale - 0.7) * 1.2 +
+            (p.health / 100) * 1.2;
+          const buds = Math.max(0, Math.round(expected * (0.3 + Math.random() * 1.35) - 0.4));
+          if (buds > 0) {
+            p.dogiri.buds = buds;
+            lines.push(`🌱 ${p.name} の胴切り台から芽が ${buds} 個吹いた！ 子株を外そう`);
+          } else {
+            p.dogiri = undefined;
+            lines.push(`🥀 ${p.name} の胴切りは失敗… 芽は出なかった (台は回復に向かう)`);
+          }
+        }
+      }
+    }
+
     // --- 成長 ---
     p.lightAvg = p.lightAvg + (light - p.lightAvg) * 0.28;
     const tempGrowF = temp < 10 ? 0 : temp < 18 ? (temp - 10) / 8 * 0.6 : temp <= 32 ? 1 : 0.6;
@@ -145,7 +168,8 @@ export function tickDay(
 
     const pts =
       10 * (0.5 + p.genetics.growth * 0.9) * tempGrowF * lightF * moistF * fertF * stressF * rootF * healthF * stageF;
-    p.growthProgress += pts * growthSpeed;
+    // 胴切り中は成長点がないので新しい葉は出ない
+    if (!p.dogiri) p.growthProgress += pts * growthSpeed;
 
     const threshold = 26 + p.leaves.length * 1.3;
     if (p.growthProgress >= threshold) {

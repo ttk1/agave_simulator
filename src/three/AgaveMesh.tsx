@@ -65,7 +65,10 @@ export function AgaveMesh({ plant, maxRadius = 0, showPot = true }: Props) {
       const width = leaf.width * plant.leafScale * 0.34 * vis.widthMul;
       const thick = leaf.thick * plant.leafScale * 0.085 * vis.thickMul;
       // 古い葉ほど開き、徒長葉は垂れる。硬い品種は垂れにくく、内巻き品種は反り込む
-      const baseAngle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(64, 14, Math.pow(rank, 0.8)));
+      // 胴切り後は上部の葉が無いので、残った下葉は全体に開いた姿勢になる
+      const baseAngle = plant.dogiri
+        ? THREE.MathUtils.degToRad(THREE.MathUtils.lerp(64, 42, Math.pow(rank, 0.8)))
+        : THREE.MathUtils.degToRad(THREE.MathUtils.lerp(64, 14, Math.pow(rank, 0.8)));
       const droop =
         THREE.MathUtils.degToRad(18 + leaf.etiole * 95 * (1 - vis.stiffness) + (1 - g.compact) * 18) +
         vis.curve;
@@ -168,13 +171,41 @@ export function AgaveMesh({ plant, maxRadius = 0, showPot = true }: Props) {
                 <mesh geometry={lf.spines} material={spineMaterial} castShadow />
               </group>
             ))}
-            {/* 中心の未展開葉 (芯) */}
+            {/* 中心の未展開葉 (芯)。胴切り中は切り口の円盤になる */}
             {plant.stage !== "dead" && plant.leaves.length > 0 && (
-              <mesh position={[0, 0.24 * plant.leafScale, 0]}>
-                <coneGeometry args={[0.055 * plant.leafScale, 0.42 * plant.leafScale, 7]} />
-                <meshStandardMaterial color={leafColorOf(plant.genetics, NEUTRAL_LEAF,
-                  visualOf(plant.speciesId)).offsetHSL(0, 0.02, 0.06)} roughness={0.6} />
-              </mesh>
+              plant.dogiri ? (
+                <group>
+                  <mesh position={[0, 0.15 * plant.leafScale, 0]}>
+                    <cylinderGeometry args={[0.1 * plant.leafScale, 0.12 * plant.leafScale, 0.06 * plant.leafScale, 10]} />
+                    <meshStandardMaterial color="#d9cfa6" roughness={0.9} />
+                  </mesh>
+                  {/* 吹いた芽 */}
+                  {Array.from({ length: plant.dogiri.buds }, (_, k) => {
+                    const a = k * GOLDEN_ANGLE + 0.7;
+                    const r = 0.1 * plant.leafScale;
+                    return (
+                      <mesh
+                        key={k}
+                        position={[Math.cos(a) * r, 0.2 * plant.leafScale, Math.sin(a) * r]}
+                        rotation={[Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5]}
+                      >
+                        <coneGeometry args={[0.035 * plant.leafScale, 0.12 * plant.leafScale, 6]} />
+                        <meshStandardMaterial
+                          color={leafColorOf(plant.genetics, NEUTRAL_LEAF,
+                            visualOf(plant.speciesId)).offsetHSL(0, 0.06, 0.12)}
+                          roughness={0.6}
+                        />
+                      </mesh>
+                    );
+                  })}
+                </group>
+              ) : (
+                <mesh position={[0, 0.24 * plant.leafScale, 0]}>
+                  <coneGeometry args={[0.055 * plant.leafScale, 0.42 * plant.leafScale, 7]} />
+                  <meshStandardMaterial color={leafColorOf(plant.genetics, NEUTRAL_LEAF,
+                    visualOf(plant.speciesId)).offsetHSL(0, 0.02, 0.06)} roughness={0.6} />
+                </mesh>
+              )
             )}
           </>
         )}

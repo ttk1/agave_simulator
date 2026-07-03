@@ -120,6 +120,28 @@ export const FERT_SPEC = {
   liquid: { name: "液肥", price: 60, days: 12 },
 } as const;
 
+// ===== 胴切り =====
+
+/**
+ * 胴切りチャレンジ: 育った株の成長点を切り、台から子株 (親のクローン) を
+ * 吹かせる。何個取れるかは運しだい。芽吹きまでは棚で管理が必要。
+ */
+export const DOGIRI = {
+  /** 実行に必要な葉数 */
+  minLeaves: 10,
+  /** 実行に必要な健康 */
+  minHealth: 30,
+  /** 芽吹きまでの成長日数 (growthSpeed でスケール) */
+  sproutDays: 14,
+  /** 切った後に残る葉の割合 (下葉を残す) */
+  keepLeafRatio: 0.45,
+  /** 切った直後の健康コストとストレス日数 */
+  healthCost: 8,
+  stressDays: 4,
+  /** 芽吹きが進む最低温度 */
+  minTemp: 15,
+} as const;
+
 // ===== 品種 =====
 
 export const SPECIES: SpeciesDef[] = [

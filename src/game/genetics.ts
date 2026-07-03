@@ -78,8 +78,10 @@ export function makePlant(opts: {
   potSize: 1 | 2 | 3;
   soil: Plant["soil"];
   baseFert: boolean;
+  /** 指定すると遺伝子を引き継ぐ (胴切り子株 = 親のクローン) */
+  genetics?: Genetics;
 }): Plant {
-  const g = rollGenetics(opts.sp);
+  const g = opts.genetics ?? rollGenetics(opts.sp);
   const p: Plant = {
     id: uid("p"),
     speciesId: opts.sp.id,

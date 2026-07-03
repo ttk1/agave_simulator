@@ -78,6 +78,21 @@ export interface Plant {
   rot: number;
   /** 害虫発生中か */
   pest: boolean;
+  /** 胴切りチャレンジ中の状態 (undefined = 通常株) */
+  dogiri?: DogiriState;
+}
+
+/**
+ * 胴切り: 成長点を切って台から子株を吹かせる。
+ * sproutLeft > 0 = 芽吹き待ち (温度・水分があると進む)。
+ * sproutLeft <= 0 && buds > 0 = 芽吹き済みで収穫待ち。
+ * 全部収穫すると undefined に戻り、台は通常成長に復帰する。
+ */
+export interface DogiriState {
+  /** 芽吹きまでの残り成長日数 */
+  sproutLeft: number;
+  /** 吹いた芽 (未収穫の子株) の数 */
+  buds: number;
 }
 
 export interface Led {
